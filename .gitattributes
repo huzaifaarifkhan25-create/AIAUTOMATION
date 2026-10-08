@@ -1,0 +1,2 @@
+# Preserve Windows batch files as CRLF in both GitHub ZIPs and Git checkouts.
+*.bat -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol

@@ -1,0 +1,84 @@
+// Isolated fixture or production check. Never sends an email or calls a business.
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const { chromium, request: playwrightRequest } = require('/opt/ms-playwright-go/package');
+(async () => {
+  const base = process.env.AUTOMATION_TEST_URL || 'http://127.0.0.1:8001';
+  const out = process.env.AUTOMATION_TEST_OUT || '/out';
+  const token = process.env.APP_API_TOKEN || 'synthetic-hackathon-fixture-only';
+  const browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
+  const checks = [], errors = [], csp = [];
+  const checked = value => { checks.push(value); console.log('PASS ' + value); };
+  const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
+  try {
+    const page = await context.newPage();
+    page.on('pageerror', error => errors.push(error.message));
+    page.on('console', message => { if (/violates.*Content Security Policy/i.test(message.text())) csp.push(message.text()); });
+    await page.goto(base + '/app/#automation');
+    await page.getByLabel('API token', { exact: true }).fill(token);
+    await page.getByRole('button', { name: 'Unlock workspace' }).click();
+    await page.getByRole('heading', { name: 'Automation lab', exact: true }).waitFor();
+    await page.getByText(/Sandbox only: messages stay/).waitFor();
+    assert.equal(await page.getByRole('button', { name: /Send email/i }).count(), 0);
+    checked('Automation lab opens behind authentication and clearly labels unsent sandbox behavior');
+    await page.getByRole('button', { name: 'Create fictional reminder demo' }).click();
+    await page.locator('#notice').getByText('Fictional reminder workflow is ready. No real business was analyzed or contacted.', { exact: true }).waitFor();
+    await page.getByLabel('Reminder workflow', { exact: true }).waitFor();
+    assert.match(await page.getByLabel('Reminder workflow', { exact: true }).textContent(), /Demo Reminder Studio \(Mock\)/);
+    checked('Explicit demo setup creates a labeled fictional reminder workflow');
+    const fill = async seconds => {
+      const local = value => { const d = new Date(value); return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,19).replace(/:00$/, ''); };
+      await page.getByLabel('Appointment starts', { exact: true }).fill(local(Date.now()+3600000));
+      await page.getByLabel('Reminder time', { exact: true }).fill(local(Date.now()+seconds*1000));
+      await page.getByLabel('Permission recorded for this synthetic contact', { exact: true }).check();
+      await page.getByLabel('I understand this creates an unsent sandbox preview', { exact: true }).check();
+    };
+    await fill(5);
+    await page.getByLabel('Reminder preview text', { exact: true }).fill('Synthetic reminder <img src=x onerror=alert(1)>');
+    assert.deepEqual(await page.locator('#content form').evaluate(form => Array.from(form.elements).filter(node => node.willValidate && !node.validity.valid).map(node => ({type:node.type,error:node.validationMessage,value:node.value}))), []);
+    const responsePromise = page.waitForResponse(response => response.url().endsWith('/appointments') && response.request().method() === 'POST');
+    await page.getByRole('button', { name: 'Schedule sandbox reminder', exact: true }).click();
+    if (await page.locator('#notice.error').isVisible()) throw new Error(await page.locator('#notice.error').textContent());
+    const scheduled = await responsePromise;
+    assert.equal(scheduled.status(), 202);
+    const appointment = await scheduled.json();
+    await page.locator('#notice').getByText(new RegExp('Sandbox appointment '+appointment.id.slice(0,8)+' scheduled')).waitFor();
+    assert.equal(appointment.reminder.mode, 'sandbox');
+    const request = await playwrightRequest.newContext({ baseURL: base, extraHTTPHeaders: { Authorization: 'Bearer '+token } });
+    for (let i=0;i<60;i++) {
+      const run = await (await request.get('/workflow-runs/'+appointment.run_id)).json();
+      if (run.status === 'succeeded') break;
+      await new Promise(resolve=>setTimeout(resolve,250));
+      if(i===59) throw new Error('Sandbox reminder did not finish');
+    }
+    await page.getByRole('button', { name: 'Refresh run history' }).click();
+    const card = page.locator(`[data-appointment-id="${appointment.id}"]`);
+    await card.getByText('Appointment: Scheduled · Run: Succeeded', { exact: true }).waitFor();
+    assert.equal(await card.locator('.message-preview').textContent(), 'Synthetic reminder <img src=x onerror=alert(1)>');
+    assert.equal(await card.locator('.message-preview img').count(), 0);
+    await card.getByText('Step history', { exact: true }).click();
+    assert.match(await card.textContent(), /Step completed/);
+    const previews = await (await request.get('/workflow-outbox?run_id='+appointment.run_id)).json();
+    assert.equal(previews.length, 1); assert.equal(previews[0].sent, false);
+    checked('UI schedules and executes a real local reminder, records steps, and renders hostile preview text safely');
+    await fill(60);
+    const cancelPromise = page.waitForResponse(response => response.url().endsWith('/appointments') && response.request().method() === 'POST');
+    await page.getByRole('button', { name: 'Schedule sandbox reminder', exact: true }).click();
+    const second = await (await cancelPromise).json();
+    await page.locator('#notice').getByText(new RegExp('Sandbox appointment '+second.id.slice(0,8)+' scheduled')).waitFor();
+    const cancelCard = page.locator(`[data-appointment-id="${second.id}"]`);
+    await cancelCard.getByRole('button', { name: 'Cancel appointment', exact: true }).click();
+    await page.locator(`[data-appointment-id="${second.id}"]`).getByText('Appointment: Cancelled · Run: Cancelled', { exact: true }).waitFor();
+    assert.deepEqual(await (await request.get('/workflow-outbox?run_id='+second.run_id)).json(), []);
+    checked('UI cancellation persistently stops pending reminder work without creating a preview');
+    fs.mkdirSync(out, { recursive: true });
+    await page.screenshot({ path: out+'/automation-desktop.png', fullPage: true });
+    await page.setViewportSize({ width:390, height:844 });
+    assert(await page.evaluate(()=>document.documentElement.scrollWidth <= innerWidth));
+    await page.screenshot({ path: out+'/automation-mobile.png', fullPage: true });
+    checked('Automation lab fits desktop/mobile and runs without JavaScript or CSP errors');
+    assert.deepEqual(errors, []); assert.deepEqual(csp, []);
+    fs.writeFileSync(out+'/automation-report.json', JSON.stringify({checked_at:new Date().toISOString(),checks,javascript_errors:errors,csp_errors:csp,synthetic_data:true,businesses_contacted:false,email_sent:false},null,2));
+    await request.dispose();
+  } finally { await browser.close(); }
+})().catch(error=>{console.error(error);process.exitCode=1;});

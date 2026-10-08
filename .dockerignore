@@ -1,0 +1,15 @@
+**
+!Dockerfile
+!backend/
+!backend/requirements.txt
+!backend/app/
+!backend/app/**
+!backend/collect_leads.py
+!backend/maps_browser.cjs
+!backend/serve.py
+!backend/healthcheck.py
+!backend/backup.py
+!deploy/
+!deploy/build_dependencies.py
+**/__pycache__/**
+**/*.py[cod]

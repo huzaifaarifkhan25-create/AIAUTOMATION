@@ -1,0 +1,24 @@
+services:
+  app:
+    image: aiautomation:local
+    init: true
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - app-data:/data
+    read_only: true
+    tmpfs:
+      - /tmp:rw,nosuid,size=256m
+    shm_size: 512m
+    cpus: 2
+    mem_limit: 2g
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    stop_grace_period: 330s
+
+volumes:
+  app-data:

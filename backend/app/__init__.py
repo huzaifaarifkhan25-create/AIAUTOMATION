@@ -1,0 +1,1 @@
+"""Med spa automation backend."""

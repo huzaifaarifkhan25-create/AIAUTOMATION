@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#2d3e50">
+  <title>AIAutomation · Med spa workspace</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23ff7a59'/%3E%3Cpath d='M16 44 32 16l16 28M24 34h16' stroke='%23fff' stroke-width='5' fill='none'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/app/styles.css">
+  <script type="module" src="/app/workspace.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to workspace</a>
+  <aside class="sidebar">
+    <a class="brand" href="#overview"><span class="brand-mark" aria-hidden="true">A</span><span>AI<span class="brand-light">Automation</span></span></a>
+    <div class="workspace-label"><span class="workspace-icon" aria-hidden="true">✧</span><div><strong>Med spa workspace</strong><small>Sales &amp; automation</small></div></div>
+    <nav aria-label="Workspace navigation">
+      <div class="nav-label">WORKSPACE</div>
+      <a href="#overview" data-view="overview"><span aria-hidden="true">◫</span>Overview</a>
+      <div class="nav-label">CRM</div>
+      <a href="#leads" data-view="leads"><span aria-hidden="true">▤</span>Leads & research</a>
+      <a href="#discovery" data-view="discovery"><span aria-hidden="true">⌕</span>Discover & import</a>
+      <a href="#clients" data-view="clients"><span aria-hidden="true">◇</span>Clients</a>
+      <a href="#tasks" data-view="tasks"><span aria-hidden="true">☑</span>Follow-up tasks</a>
+      <div class="nav-label">AUTOMATION</div>
+      <a href="#workflows" data-view="workflows"><span aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 7v10M8 12h5a5 5 0 0 0 5-5"/><circle cx="6" cy="5" r="2"/><circle cx="6" cy="19" r="2"/><circle cx="18" cy="5" r="2"/></svg></span>Workflow drafts</a>
+      <a href="#connections" data-view="connections"><span aria-hidden="true">⚙</span>Connections</a>
+      <a href="#automation" data-view="automation"><span aria-hidden="true">▷</span>Automation lab</a>
+      <a href="#operations" data-view="operations"><span aria-hidden="true">◉</span>Operations</a>
+    </nav>
+    <div class="sidebar-note"><span class="status-dot" aria-hidden="true"></span><strong>Built for med spas</strong><p>From a real prospect to a reviewed automation.</p><a href="#discovery">Discover businesses →</a></div>
+    <div class="sidebar-footer"><span class="avatar" aria-hidden="true">M</span><div><strong>Med spa operator</strong><small>Shared workspace</small></div></div>
+  </aside>
+  <div class="workspace">
+    <header class="topbar">
+      <div class="breadcrumb">Workspace <span>/</span> <strong id="breadcrumb">Overview</strong></div>
+      <form id="global-search-form" class="global-search" role="search">
+        <span aria-hidden="true">⌕</span><input id="global-search" type="search" aria-label="Search saved businesses" placeholder="Search your CRM" autocomplete="off" disabled aria-controls="global-search-results">
+        <div id="global-search-results" class="search-results" aria-label="Matching businesses" hidden></div>
+      </form>
+      <div class="topbar-actions"><span id="connection-status" class="badge neutral">Connecting…</span><button id="refresh" class="icon-button" type="button" aria-label="Refresh workspace">↻</button><button id="lock" class="text-button" type="button" hidden>Lock</button></div>
+    </header>
+    <main id="main" tabindex="-1"><div id="content"><div class="empty-state">Loading your workspace…</div></div></main>
+    <footer class="page-footer"><span>AIAutomation</span><span>Med spa research · Evidence-based scoring · Human review</span></footer>
+  </div>
+  <div id="notice" class="notice" role="status" aria-live="polite" hidden></div>
+  <dialog id="lead-dialog" aria-labelledby="lead-title"><div id="lead-content"></div></dialog>
+  <dialog id="auth-dialog" aria-labelledby="auth-title">
+    <form id="auth-form" class="auth-card">
+      <div class="eyebrow">WORKSPACE ACCESS</div><h2 id="auth-title">Unlock your workspace</h2>
+      <p>This server requires its shared API token. It stays in this tab’s memory and is cleared when you lock or reload.</p>
+      <label for="api-token">API token</label><input id="api-token" name="token" type="password" required autocomplete="off" spellcheck="false">
+      <p id="auth-error" class="error-text" role="alert"></p><button class="button primary" type="submit">Unlock workspace <span aria-hidden="true">→</span></button>
+      <small>This is shared workspace access. Individual user accounts are a later milestone.</small>
+    </form>
+  </dialog>
+</body>
+</html>
