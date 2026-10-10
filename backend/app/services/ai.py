@@ -253,12 +253,20 @@ class AI:
         return await self.chat_response(answer, request.message, name)
 
     async def chat_response(self, raw, user_message, tool_used=None):
+        cleaned = str(raw).strip()
+        if cleaned.startswith("```"):
+            lines = cleaned.splitlines()
+            if lines and lines[0].startswith("```"):
+                lines = lines[1:]
+            if lines and lines[-1].startswith("```"):
+                lines = lines[:-1]
+            cleaned = "\n".join(lines).strip()
         try:
-            parsed = json.loads(raw)
+            parsed = json.loads(cleaned)
         except (ValueError, TypeError):
             parsed = None
         if not isinstance(parsed, dict):
-            return ChatResponse(answer=str(raw)[:1200] or "No answer was returned.", tool_used=tool_used)
+            return ChatResponse(answer=str(cleaned or raw)[:1200] or "No answer was returned.", tool_used=tool_used)
         answer = str(parsed.get("answer") or "No answer was returned.")[:1200]
         proposal = None
         try:
