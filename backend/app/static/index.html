@@ -3,33 +3,32 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#2d3e50">
+  <meta name="theme-color" content="#f7f5f1">
   <title>AIAutomation · Med spa workspace</title>
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23ff7a59'/%3E%3Cpath d='M16 44 32 16l16 28M24 34h16' stroke='%23fff' stroke-width='5' fill='none'/%3E%3C/svg%3E">
+  <link rel="icon" type="image/png" href="/app/brand/logo-color.png">
   <link rel="stylesheet" href="/app/styles.css">
   <script type="module" src="/app/workspace.js"></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to workspace</a>
   <aside class="sidebar">
-    <a class="brand" href="#overview"><span class="brand-mark" aria-hidden="true">A</span><span>AI<span class="brand-light">Automation</span></span></a>
-    <div class="workspace-label"><span class="workspace-icon" aria-hidden="true">✧</span><div><strong>Med spa workspace</strong><small>Sales &amp; automation</small></div></div>
+    <div class="sidebar-brand"><a class="brand" href="#overview"><span class="brand-mark" aria-hidden="true"><img src="/app/brand/logo-color.png" width="42" height="42" alt=""></span><span>AI<span class="brand-light">Automation</span></span></a><span class="sidebar-brand-caption">MED SPA WORKSPACE</span></div>
+    <details id="mobile-sections" class="mobile-sections"><summary>Sections <strong id="mobile-section-current">Overview</strong></summary><div id="mobile-section-list" class="mobile-section-list" role="navigation" aria-label="All workspace sections"></div></details>
     <nav aria-label="Workspace navigation">
       <div class="nav-label">WORKSPACE</div>
-      <a href="#overview" data-view="overview"><span aria-hidden="true">◫</span>Overview</a>
+      <a href="#overview" data-view="overview"><span aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span>Overview</a>
       <div class="nav-label">CRM</div>
-      <a href="#leads" data-view="leads"><span aria-hidden="true">▤</span>Leads & research</a>
-      <a href="#discovery" data-view="discovery"><span aria-hidden="true">⌕</span>Discover & import</a>
-      <a href="#clients" data-view="clients"><span aria-hidden="true">◇</span>Clients</a>
-      <a href="#tasks" data-view="tasks"><span aria-hidden="true">☑</span>Follow-up tasks</a>
+      <a href="#leads" data-view="leads"><span aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><circle cx="12" cy="9" r="2"/><path d="M8 17c.5-2 2-3 4-3s3.5 1 4 3"/></svg></span>Leads & research</a>
+      <a href="#discovery" data-view="discovery"><span aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg></span>Discover & import</a>
+      <a href="#clients" data-view="clients"><span aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c.5-4 3.5-7 8-7s7.5 3 8 7"/></svg></span>Clients</a>
+      <a href="#tasks" data-view="tasks"><span aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="m8 12 3 3 5-6"/></svg></span>Follow-up tasks</a>
       <div class="nav-label">AUTOMATION</div>
-      <a href="#workflows" data-view="workflows"><span aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 7v10M8 12h5a5 5 0 0 0 5-5"/><circle cx="6" cy="5" r="2"/><circle cx="6" cy="19" r="2"/><circle cx="18" cy="5" r="2"/></svg></span>Workflow drafts</a>
-      <a href="#connections" data-view="connections"><span aria-hidden="true">⚙</span>Connections</a>
-      <a href="#automation" data-view="automation"><span aria-hidden="true">▷</span>Automation lab</a>
-      <a href="#operations" data-view="operations"><span aria-hidden="true">◉</span>Operations</a>
+      <a href="#workflows" data-view="workflows"><span aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="5" cy="6" r="2"/><circle cx="19" cy="6" r="2"/><circle cx="12" cy="18" r="2"/><path d="m7 7.5 3.5 7m7-7-3.5 7"/></svg></span>Workflow drafts</a>
+      <a href="#connections" data-view="connections"><span aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 3v4m8-4v4M6 7h12v4a6 6 0 0 1-12 0V7Zm6 10v4"/></svg></span>Connections</a>
+      <a href="#automation" data-view="automation"><span aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m10 8 6 4-6 4V8Z"/></svg></span>Automation lab</a>
+      <a href="#operations" data-view="operations"><span aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 12h4l3-6 4 12 3-6h4"/></svg></span>Operations</a>
     </nav>
-    <div class="sidebar-note"><span class="status-dot" aria-hidden="true"></span><strong>Built for med spas</strong><p>From a real prospect to a reviewed automation.</p><a href="#discovery">Discover businesses →</a></div>
-    <div class="sidebar-footer"><span class="avatar" aria-hidden="true">M</span><div><strong>Med spa operator</strong><small>Shared workspace</small></div></div>
+    <div class="sidebar-footer"><span class="avatar" aria-hidden="true">A</span><div><strong>Shared pilot</strong><small>Operator workspace</small></div></div>
   </aside>
   <div class="workspace">
     <header class="topbar">
@@ -47,6 +46,7 @@
   <dialog id="lead-dialog" aria-labelledby="lead-title"><div id="lead-content"></div></dialog>
   <dialog id="auth-dialog" aria-labelledby="auth-title">
     <form id="auth-form" class="auth-card">
+      <img class="auth-logo" src="/app/brand/logo-navy.png" width="64" height="64" alt="" aria-hidden="true">
       <div class="eyebrow">WORKSPACE ACCESS</div><h2 id="auth-title">Unlock your workspace</h2>
       <p>This server requires its shared API token. It stays in this tab’s memory and is cleared when you lock or reload.</p>
       <label for="api-token">API token</label><input id="api-token" name="token" type="password" required autocomplete="off" spellcheck="false">

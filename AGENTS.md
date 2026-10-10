@@ -1,5 +1,65 @@
 # Med Spa Automation Platform
 
+## Current caller/email work — Level 0 and Level 1, 2026-10-09
+
+Read `CALLER-EMAIL-INSTRUCTIONS.md` and `backend/LEVEL1-OUTREACH.md` before further outreach changes. The user authorized Levels 0 and 1 only; do not begin real email sending (Level 2) or Twilio click-to-call (Level 3) until they confirm. Level 1 now saves structured, unsent email and human call-script drafts in `ai_insights`, accepts sender/language input, checks cited public facts, and uses a rule-based email fallback on unavailable/invalid Gemini output. The Next.js lead detail has draft panels, copy/download/`mailto:`/`tel:` and operator-confirmed manual activity logging. The provider routes remain blocked in its proxy. Keep do-not-contact, mock, archive and evidence guards.
+
+The supplied Gemini key was entered only into a hidden local backend prompt, not stored in source. A synthetic read-only provider call returned HTTP 403, so Gemini operation remains unverified and AI call scripts cannot currently be generated. The owner needs a fresh authorized Gemini API key entered locally and must review three to four actual med-spa leads before real-lead draft acceptance. Existing five CSV rows are massage/spa listings without real analysis. No real business was contacted by this work; preserve primary SQLite records. The Python suite passed 199 tests and the frontend build/typecheck plus isolated HTTP smoke passed. A read-only primary check returned integrity `ok` and 31 logical rows after other app activity during this turn; do not treat that as an unchanged-row claim. See the top of `backend/VERIFICATION.md` for exact limits. Rotate the key that appeared in chat.
+
+## Additive Next.js/Gemini/Stitch milestone — 2026-10-09
+
+The later visual clarification keeps `/app/` as the old fallback; the new purple interface is on port 3000. Current local data: five CSV businesses and one mock; three workflows are all mock and no real prospect is review-ready. The Next.js dashboard must hide unanalysed zero-score listings from Top prospects; workflows/tasks hide demos by default. Subtle CSS motion and reduced-motion support were added. Frontend build, isolated proxy/CSV smoke, read-only desktop/mobile screenshots, and primary SQLite integrity passed after this UI-only pass. The full manual control sweep and live provider checks remain open. Read `IMPLEMENTATION-STATUS.md` and the top of `backend/VERIFICATION.md` before claiming completion.
+
+`CODEX-INSTRUCTIONS.md` authorizes an additive Next.js workspace in `frontend/`, separate Gemini draft/insight APIs and key-free Google Stitch MCP setup. Preserve the existing `/app/` UI, FastAPI routes, primary SQLite rows and collector. `GEMINI_API_KEY` is backend-only; `STITCH_API_KEY` is private Codex design tooling. The screenshot containing a Stitch key was not saved; rotate that exposed key before use. New AI insights live in `ai_insights`, carry origin/model/time/input hash, and do not alter scoring evidence. AI chat may call only fixed read-only functions; a task or draft proposal needs a separate user confirmation. The Next.js proxy holds `APP_API_TOKEN` server-side and exposes only selected routes; access is shared pilot access, not individual accounts. Final verification passed 190 Python tests, a Next.js production build and an isolated HTTP proxy/CSV smoke; no manual Edge/UI run occurred. Live Gemini, Stitch, Vercel/hosted deployment, email and calls remain unverified. A read-only primary SQLite check returned integrity `ok` and 28 logical rows, with no primary writes by this work. See `frontend/README.md` and the top of `backend/VERIFICATION.md`. The checkout has no `.git`, so no feature branch could be created here.
+
+## Current local discovery/UI milestone — 2026-10-09
+
+The current Windows UI uses a Calm Studio visual pass and Atomic CRM as the
+lead-workflow reference. Windows defaults to the local Edge collector when its
+optional Node/playwright-core setup is installed; this avoids requiring Docker.
+The manual **Open Google Maps** link opens a query and saves nothing. The **Start
+live pilot** flow collects up to ten results into a retained CSV/source preview;
+never import automatically. Keep TLS verification, managed proxy routing, and
+the restricted child-process environment. A one-listing local Edge collector
+run and an isolated in-app run both succeeded with a verified result preview;
+the in-app fixture database remained empty. The Docker runtime remains optional.
+CSV import remains available. The historical generic New York job error does
+not reveal its exact cause. The previous full Python suite passed 179 tests;
+targeted collector/workspace checks passed after this change. See the newest
+backend/VERIFICATION.md section. Preserve primary SQLite rows.
+
+The latest one-listing query returned a tanning salon. It was not imported.
+Retain/display source categories in CSV preview and require explicit category
+review before importing live-pilot results. A human must still verify relevance;
+do not promise that Maps results are all med spas.
+
+After three later primary pilot jobs failed without importable output, the user
+asked for an explanation and no further manual website/browser testing. The
+readiness check now explicitly means local Edge setup only, not a successful
+Maps search. Future recognized collector failures store safe specific messages;
+old generic job errors cannot reveal their exact cause. Do not claim those jobs
+were diagnosed individually. Targeted simulated checks passed 24 tests; no
+browser was opened for that change. See current VERIFICATION.md.
+
+Read-only inspection after the user's latest screenshot found three subsequent
+successful Islamabad pilots, each with five captured listings and retained CSV
+and source pages. Their visible categories are Spa/Massage spa, so relevance is
+unverified and no automatic import is allowed. The Discover page now surfaces
+the latest count beside the search form and auto-opens a preview for a pilot
+started in the active page. Category is an explicit preview column. The user
+again asked to avoid manual Edge/website testing; do not claim that this latest
+UI change was browser-tested. PROJECT-EXPLAINED.md is the requested
+purpose/usage/limits guide. Preserve existing primary rows.
+
+The user's next screenshot showed newer location-only searches (`New york` and
+`Islamabad pakistan`) failing without CSV while three specific Islamabad med-spa
+queries had succeeded. The form now expands city-only text to `medical spas in
+<city>` and shows the resulting query. The collector detects Maps place/city
+pages and reports a safe specific failure. Browser-closed messaging avoids
+assuming the user closed Edge. The project guide is now 294 words. Targeted
+simulated checks passed 24 tests; no Edge/manual website retest was authorized.
+Do not claim the newest UI logic succeeded live until it is tested live.
+
 ## Product direction
 
 Target industry: med spas.
@@ -261,14 +321,19 @@ obsolete v0.7 image/caches were removed, with data/base images preserved.
 No new live scrape/email/call/public hosting was performed. Credentials/hosting
 remain required for actual provider verification, securely entered in settings.
 
-## Current CRM interface — v0.10.0
+## CRM interface — v0.10.0, refined 2026-10-09
 
-The user has chosen a CRM interface inspired by GoHighLevel or HubSpot and
-authorized selecting the fit. HubSpot is the chosen reference because lead
-records, public qualification, manual tasks, client profiles and activity history
-match this backend. Use its dark navigation, compact record tables, coral primary
-actions, teal links, saved views and record details while retaining AIAutomation's
-own identity. This is UI inspiration, not a HubSpot integration or a feature clone.
+The user supplied a coral/navy interwoven A logo and an all-navy variant.
+Prepared transparent PNGs are in backend/app/static/brand. Use the color mark
+for the sidebar and favicon, and navy for the shared-access card. Laptop updates
+must preserve .local/backend.sqlite3 and imported leads; the Windows guide
+describes replacing only the static folder for branding changes.
+
+Atomic CRM is the current GitHub UX reference because its open CRM flow centers
+on lead/contact records, pipeline stages, tasks, notes and activity. HubSpot was
+an earlier reference. Keep AIAutomation's original warm med-spa UI and backend;
+do not add the reference repo's React stack or copy its components. Preserve
+compact record tables, coral actions, teal links, saved views and record details.
 Global search operates on authenticated saved records and the current demo filter;
 clear results/query and disable it on lock/reload. Preserve safe text rendering,
 keyboard navigation, existing API contracts and all execution/consent guards.
@@ -285,6 +350,40 @@ the intermediate UI build were removed with only their specifically identified
 unused app caches to preserve VFS disk. No volumes or global caches were pruned.
 
 ## Development rules
+
+The Next.js shared preview now locks on every full workspace document load, including reload and new-tab access; in-app navigation stays active. Keep the server-side page/API cookie checks and clear the cookie in `frontend/proxy.ts` on document navigation. This is local shared access, not individual accounts.
+
+The 2026-10-09 Windows/UI pass uses Tabler as a visual reference while retaining
+the HubSpot-inspired record structure and AIAutomation identity. The source
+passes 175 Python tests and 29 isolated visible Edge fixture checks after
+Windows Docker-collector compatibility fixes and mobile Sections navigation.
+Read backend/LIVE_INTEGRATION_CHECKS.md: two real Maps searches and one public
+website fetch succeeded, but the pinned Docker collector image is absent and
+C: initially had about 153 MB free. A later exact-image pull stalled with no
+visible layer progress and was interrupted; the app collector was not run or
+imported. AI,
+Resend and Twilio endpoints were reachable without credentials, but live
+operations remain unverified and disabled. Do not claim provider success from
+HTTP 401 reachability. No business was contacted.
+
+The 2026-10-09 visible Edge control audit passed 99 overlapping assertions across
+all nine sections and nested safe actions. Final fixture suites pass 29 checks:
+15 research/CRM, five Automation lab, and nine client/task/operations. The mobile
+Sections menu exposes all routes, and hash navigation closes the lead dialog.
+See backend/UI_CONTROL_AUDIT.md and the top of backend/VERIFICATION.md. These
+isolated fictional checks do not verify live collection or provider actions.
+
+The 2026-10-09 Windows hardening pass repaired SQLite-plus-scraper backup recovery
+across Windows path forms without changing the primary schema or records. The local
+browser subprocess now receives only runtime/proxy environment variables; raw CSV
+remains the import/provenance source and a separate spreadsheet-viewing download
+neutralizes formula-like cells. The portable container entrypoint requires
+APP_ENV=production. The complete Python suite passed 172 tests before that final
+entrypoint guard; its new isolated test passed. Docker/browser packaging was not
+rerun because the Linux Docker engine was unavailable. Read the newest
+backend/VERIFICATION.md section before claiming release verification. Browser
+isolation, proxy destination enforcement, ingress throttling and individual roles
+remain open public-hosting work; do not describe them as solved by this pass.
 
 - The user explicitly authorized uploading the current source to their GitHub
   repository and confirmed a Windows laptop. Use a separate branch for this

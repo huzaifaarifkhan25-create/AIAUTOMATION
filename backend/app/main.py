@@ -22,6 +22,7 @@ from app.routes.crm import router as crm_router
 from app.routes.clients import router as clients_router
 from app.routes.dialer import router as dialer_router, callbacks as dialer_callbacks
 from app.routes.operations import router as operations_router
+from app.routes.ai import router as ai_router
 from app.services.discovery import Discovery
 from app.services.gateway import Gateway
 from app.services.platform import Platform
@@ -30,6 +31,7 @@ from app.services.appointments import Appointments
 from app.services.crm import CRM
 from app.services.clients import Clients
 from app.services.dialer import Dialer
+from app.services.ai import AI
 from app.settings import Settings
 from collect_leads import collect
 
@@ -81,6 +83,7 @@ def create_app(settings=None, store=None, gateway=None):
     app.state.execution = execution
     app.state.appointments = appointments
     app.state.crm, app.state.clients, app.state.dialer = crm, clients, dialer
+    app.state.ai = AI(settings, store, platform)
 
     if settings.app_allowed_hosts:
         app.add_middleware(TrustedHostMiddleware, allowed_hosts=list(settings.app_allowed_hosts))
@@ -120,6 +123,7 @@ def create_app(settings=None, store=None, gateway=None):
     app.include_router(clients_router, dependencies=[Depends(authenticate)])
     app.include_router(dialer_router, dependencies=[Depends(authenticate)])
     app.include_router(operations_router, dependencies=[Depends(authenticate)])
+    app.include_router(ai_router, dependencies=[Depends(authenticate)])
     app.include_router(dialer_callbacks)
     app.mount("/app", StaticFiles(directory=Path(__file__).with_name("static"), html=True), name="workspace")
     return app

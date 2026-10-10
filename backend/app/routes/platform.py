@@ -27,6 +27,7 @@ async def capabilities(request: Request):
         "browser_collection_configured": collector_configured(s.browser_runtime),
         "browser_collection_runtime": s.browser_runtime,
         "ai_configured": bool(s.llm_api_key),
+        "gemini_configured": bool(s.gemini_api_key),
         "supabase_configured": bool(s.supabase_url and s.supabase_key),
         "website_fetching_configured": bool(s.website_allowed_hosts),
         "calling_enabled": s.enable_outbound_calls,

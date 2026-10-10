@@ -2,10 +2,12 @@
 // No fixture fallback, API key, messages, or calls. TLS verification stays on.
 const fs = require('fs');
 const crypto = require('crypto');
-const { chromium } = require('/opt/ms-playwright-go/package');
+const { chromium } = require(process.env.MAPS_PLAYWRIGHT_PACKAGE || '/opt/ms-playwright-go/package');
 const outDir = process.env.MAPS_OUTPUT_DIR || '/out';
 const redact = message => String(message).replace(/(https?|socks5h?):\/\/[^/\s@]+@/gi, '$1://[redacted]@');
 let activeBrowser;
+let stage = 'setup';
+const collectorError = (code, message) => Object.assign(new Error(message), { collectorCode: code });
 process.on('SIGTERM', async () => {
   const forced = setTimeout(() => process.exit(1), 8000);
   try { await activeBrowser?.close(); } finally { clearTimeout(forced); process.exit(1); }
@@ -27,7 +29,13 @@ async function collect() {
       password: decodeURIComponent(proxyURL.password),
     } : {}),
   } : undefined;
-  const browser = await chromium.launch({ headless: true, proxy, args: ['--no-sandbox'] });
+  stage = 'launch';
+  const browser = await chromium.launch({
+    headless: process.env.MAPS_BROWSER_VISIBLE !== '1', proxy,
+    ...(process.env.MAPS_BROWSER_EXECUTABLE ? { executablePath: process.env.MAPS_BROWSER_EXECUTABLE } : {}),
+    args: process.platform === 'win32' ? [] : ['--no-sandbox'],
+  });
+  stage = 'maps_navigation';
   activeBrowser = browser;
   const watchdog = setTimeout(() => browser.close().catch(() => {}), 270000);
   const records = [];
@@ -37,8 +45,20 @@ async function collect() {
     const page = await context.newPage();
     const searchURL = `https://www.google.com/maps/search/${encodeURIComponent(query)}/?hl=en`;
     const response = await page.goto(searchURL, { waitUntil: 'domcontentloaded', timeout: 60000 });
-    if (!response || response.status() >= 400) throw new Error('Maps search returned an error');
-    await page.locator('a[href*="/maps/place/"]').first().waitFor({ timeout: 30000 });
+    if (!response || response.status() >= 400) throw collectorError('maps_navigation_failed', 'Maps search returned an error');
+    if (new URL(page.url()).pathname.startsWith('/maps/place/')) {
+      throw collectorError('maps_place_page', 'Maps opened one place instead of a business results list');
+    }
+    stage = 'results';
+    try {
+      await page.locator('a[href*="/maps/place/"]').first().waitFor({ timeout: 30000 });
+    } catch (error) {
+      if (!page.isClosed() && new URL(page.url()).pathname.startsWith('/maps/place/')) {
+        throw collectorError('maps_place_page', 'Maps opened one place instead of a business results list');
+      }
+      throw error;
+    }
+    stage = 'listings';
     await page.screenshot({ path: `${outDir}/search.png`, fullPage: true });
     fs.writeFileSync(`${outDir}/search.html`, await page.content());
     const candidates = await page.locator('a[href*="/maps/place/"]').evaluateAll(nodes =>
@@ -92,7 +112,7 @@ async function collect() {
         console.error(`Listing ${index + 1} could not be collected`);
       }
     }
-    if (!records.length) throw new Error('No live listings collected; no CSV was produced');
+    if (!records.length) throw collectorError('no_usable_listings', 'No live listings collected; no CSV was produced');
     const columns = ['title', 'address', 'website', 'phone', 'review_rating', 'review_count', 'place_id', 'link', 'category', 'collected_at'];
     const quote = value => `"${String(value ?? '').replace(/"/g, '""')}"`;
     const csv = [columns.join(','), ...records.map(row => columns.map(key => quote(row[key])).join(','))].join('\n') + '\n';
@@ -112,7 +132,13 @@ async function collect() {
 }
 
 collect().catch(error => {
-  // Avoid leaking a proxy URL from an exception.
-  console.error(redact(error.message));
+  const message = String(error.message || '');
+  const code = error.collectorCode ||
+    (stage === 'launch' ? 'browser_launch_failed' :
+      /Target page, context or browser has been closed|Browser has been closed/i.test(message) ? 'browser_closed' :
+      stage === 'maps_navigation' ? 'maps_navigation_failed' :
+      stage === 'results' ? 'maps_results_unavailable' : 'collector_failed');
+  // Persist only a bounded known code through Python; provider output may contain secrets.
+  console.error(`COLLECTOR_ERROR_CODE=${code}`);
   process.exitCode = 1;
 });

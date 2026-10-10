@@ -1,5 +1,7 @@
 import asyncio
+import csv
 import hashlib
+import io
 import json
 import tempfile
 import threading
@@ -13,9 +15,10 @@ from app.main import create_app
 from app.models.business import Business
 from app.models.discovery import DiscoveryRequest
 from app.models.workflow import WebsiteFindings, now
-from app.services.discovery import Discovery
+from app.services.discovery import Discovery, spreadsheet_csv
 from app.services.scoring import automatic_evidence, score
 from app.settings import Settings
+from collect_leads import CollectorUnavailable
 
 
 class WorkspaceTests(unittest.IsolatedAsyncioTestCase):
@@ -58,7 +61,7 @@ class WorkspaceTests(unittest.IsolatedAsyncioTestCase):
             self.assertNotIn("fixture-access-token", shell.text)
             for path in ("/app/styles.css", "/app/workspace.js"):
                 self.assertEqual((await client.get(path)).status_code, 200)
-            for path in ("/businesses", "/discovery/jobs", "/analyses"):
+            for path in ("/businesses", "/discovery/jobs", "/discovery/collector-status", "/analyses"):
                 self.assertEqual((await client.get(path)).status_code, 401)
             self.assertEqual((await client.post("/discovery/jobs", json={"query": "test"})).status_code, 401)
 
@@ -75,6 +78,10 @@ class WorkspaceTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual((await self.client.get("/businesses")).json(), [])
         download = await self.client.get(prefix + "/csv")
         self.assertEqual(hashlib.sha256(download.content).hexdigest(), job["sha256"])
+        sheet = await self.client.get(prefix + "/spreadsheet.csv")
+        self.assertEqual(sheet.status_code, 200)
+        self.assertEqual(list(csv.reader(io.StringIO(sheet.content.decode("utf-8-sig"))))[1][3],
+                         "\t+12025550101")
         imported = (await self.client.post(prefix + "/import")).json()
         self.assertEqual(imported["imported_rows"], 1)
         duplicate = (await self.client.post(prefix + "/import")).json()
@@ -82,6 +89,13 @@ class WorkspaceTests(unittest.IsolatedAsyncioTestCase):
         record = (await self.client.get("/businesses")).json()[0]
         self.assertEqual(record["provenance"]["collected_at"], job["collected_at"])
         self.assertEqual(record["source"], "csv")
+
+    async def test_spreadsheet_copy_neutralizes_formula_cells_without_changing_raw_data(self):
+        raw = b'title,address\n"=1+2"," @SUM(1,2)"\n'
+        safe = spreadsheet_csv(raw)
+        self.assertEqual(raw, b'title,address\n"=1+2"," @SUM(1,2)"\n')
+        self.assertEqual(list(csv.reader(io.StringIO(safe.decode("utf-8-sig"))))[1],
+                         ["\t=1+2", "\t @SUM(1,2)"])
 
     async def test_failures_do_not_leak_secrets_or_fabricate_leads(self):
         def broken(*args):
@@ -93,6 +107,15 @@ class WorkspaceTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual((await self.client.get("/businesses")).json(), [])
         self.assertEqual((await self.client.post(f'/discovery/jobs/{job["id"]}/import')).status_code, 409)
 
+    async def test_known_collector_prerequisite_failure_is_actionable(self):
+        def missing(*args):
+            raise CollectorUnavailable("The pinned browser image is not installed. Use CSV import.")
+        self.service.collector = missing
+        job = await self.start_job()
+        self.assertEqual(job["status"], "failed")
+        self.assertEqual(job["error"], "The pinned browser image is not installed. Use CSV import.")
+        self.assertEqual((await self.client.get("/businesses")).json(), [])
+
     async def test_missing_or_modified_output_cannot_be_imported(self):
         job = await self.start_job()
         path = self.root / "scrapes/fixture-run/results.csv"
@@ -101,6 +124,7 @@ class WorkspaceTests(unittest.IsolatedAsyncioTestCase):
         for suffix in ("/preview", "/import"):
             self.assertEqual((await self.client.post(prefix + suffix)).status_code, 409)
         self.assertEqual((await self.client.get(prefix + "/csv")).status_code, 409)
+        self.assertEqual((await self.client.get(prefix + "/spreadsheet.csv")).status_code, 409)
         path.unlink()
         self.assertEqual((await self.client.post(prefix + "/preview")).status_code, 409)
         self.assertEqual((await self.client.get("/businesses")).json(), [])

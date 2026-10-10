@@ -9,7 +9,7 @@ import httpx
 
 from app.errors import AppError
 
-KINDS = {"businesses", "analyses", "workflows", "contacts", "calls", "discovery_jobs", "workflow_runs", "workflow_outbox", "delivery_events", "workflow_permissions", "appointments", "activities", "tasks", "clients", "deployments", "deployment_events", "call_events"}
+KINDS = {"businesses", "analyses", "workflows", "contacts", "calls", "discovery_jobs", "workflow_runs", "workflow_outbox", "delivery_events", "workflow_permissions", "appointments", "activities", "tasks", "clients", "deployments", "deployment_events", "call_events", "ai_insights"}
 
 
 class SQLiteStore:

@@ -1,5 +1,7 @@
 import json
+import os
 import subprocess
+import sys
 import tempfile
 import unittest
 from dataclasses import replace
@@ -10,7 +12,7 @@ import httpx
 
 from app.main import create_app
 from app.settings import Settings
-from collect_leads import collect, run_local
+from collect_leads import CollectorUnavailable, collect, collector_status, run_docker, run_local
 
 
 TEST_TOKEN = "synthetic-deployment-access-token-only-0123456789"
@@ -39,6 +41,13 @@ class ProductionTests(unittest.IsolatedAsyncioTestCase):
                     create_app(settings)
                 self.assertNotIn(TEST_TOKEN, str(raised.exception))
                 self.assertFalse(unused.exists())
+
+    def test_container_entrypoint_rejects_development_mode(self):
+        result = subprocess.run([sys.executable, str(Path(__file__).resolve().parents[1] / "serve.py")],
+                                env={**os.environ, "APP_ENV": "development"},
+                                capture_output=True, text=True, timeout=10)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("requires APP_ENV=production", result.stderr)
 
     async def test_shell_and_health_are_public_but_all_data_routes_require_token(self):
         self.assertEqual((await self.client.get("/health")).json(), {"status": "ok"})
@@ -72,17 +81,86 @@ class ProductionTests(unittest.IsolatedAsyncioTestCase):
 
 
 class LocalCollectorTests(unittest.TestCase):
+    def test_local_browser_status_does_not_need_docker(self):
+        with patch("collect_leads.local_browser_paths", return_value=("node", "package", "edge")), \
+             patch("collect_leads.shutil.which", return_value="certutil") as which:
+            status = collector_status("local")
+        self.assertTrue(status["ready"])
+        self.assertEqual(status["code"], "ready")
+        self.assertFalse(any(call.args[0] == "docker" for call in which.call_args_list))
+
+    def test_collector_status_reports_missing_image_without_pulling(self):
+        with patch("collect_leads.shutil.which", return_value="docker"), \
+             patch("collect_leads.subprocess.run", side_effect=[
+                 subprocess.CompletedProcess([], 0, "29.6.1", ""),
+                 subprocess.CompletedProcess([], 1, "", "image missing")]) as run:
+            status = collector_status("docker")
+        self.assertEqual(status["code"], "image_missing")
+        self.assertFalse(status["ready"])
+        self.assertEqual([call.args[0][1:3] for call in run.call_args_list],
+                         [["info", "--format"], ["image", "inspect"]])
+
+    def test_collector_status_bounds_unresponsive_docker(self):
+        with patch("collect_leads.shutil.which", return_value="docker"), \
+             patch("collect_leads.subprocess.run", side_effect=subprocess.TimeoutExpired("docker", 3)) as run:
+            status = collector_status("docker")
+        self.assertEqual(status["code"], "docker_unavailable")
+        self.assertFalse(status["ready"])
+        self.assertEqual(run.call_count, 1)
+
+    @unittest.skipUnless(os.name == "nt", "Windows Docker host behavior")
+    def test_windows_docker_collection_uses_container_trust_without_host_nss(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            def fake_browser(output, run_id, script, limit):
+                self.assertTrue((output / "home").is_dir())
+                (output / "results.csv").write_text("title,address,phone\nSynthetic fixture spa,Fixture address,+12025550101\n")
+                (output / "manifest.json").write_text(json.dumps({"tls_verification": True}))
+                return subprocess.CompletedProcess([], 0, "", "")
+            with patch("collect_leads.collector_status", return_value={"ready": True}), \
+                 patch("collect_leads.httpx.Client") as client, patch("collect_leads.subprocess.run") as trust, \
+                 patch("collect_leads.run_docker", side_effect=fake_browser) as browser:
+                client.return_value.__enter__.return_value.get.return_value.status_code = 200
+                path = collect("synthetic fixture only", root, 1, runtime="docker")
+                self.assertTrue(path.exists())
+                self.assertEqual(browser.call_count, 1)
+                trust.assert_not_called()
+
+    @unittest.skipUnless(os.name == "nt", "Windows Docker host behavior")
+    def test_windows_docker_command_does_not_require_unix_uid(self):
+        with tempfile.TemporaryDirectory() as directory, \
+             patch.dict(os.environ, {"HTTPS_PROXY": "", "HTTP_PROXY": "", "ALL_PROXY": ""}), \
+             patch("collect_leads.collector_status", return_value={"ready": True}), \
+             patch("collect_leads.subprocess.run", return_value=subprocess.CompletedProcess([], 0, "", "")) as run:
+            run_docker(Path(directory), "synthetic-run", Path(directory) / "collector.cjs", 1)
+            command = run.call_args_list[0].args[0]
+            self.assertEqual(command[:2], ["docker", "run"])
+            self.assertNotIn("--user", command)
+            self.assertIn("--entrypoint", command)
+
     def test_local_collection_uses_bundled_browser_without_launching_docker(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             def fake_browser(command, environment):
                 output = Path(environment["MAPS_OUTPUT_DIR"])
                 self.assertEqual(environment["HOME"], str(output / "home"))
+                self.assertEqual(environment["MAPS_PLAYWRIGHT_PACKAGE"], "fixture-package")
+                self.assertEqual(environment["HTTPS_PROXY"], "http://proxy.example:1234")
+                self.assertNotIn("APP_API_TOKEN", environment)
+                self.assertNotIn("RESEND_API_KEY", environment)
+                if os.name == "nt":
+                    self.assertEqual(environment["MAPS_BROWSER_EXECUTABLE"], "fixture-edge")
+                    self.assertEqual(environment["MAPS_BROWSER_VISIBLE"], "1")
+                    self.assertEqual(environment["SystemRoot"], os.environ["SystemRoot"])
                 self.assertTrue((output / "queries.txt").exists())
                 (output / "results.csv").write_text("title,address,phone\nSynthetic fixture spa,Fixture address,+12025550101\n")
                 (output / "manifest.json").write_text(json.dumps({"tls_verification": True}))
                 return subprocess.CompletedProcess(command, 0, "fixture browser result", "")
-            with patch("collect_leads.httpx.Client") as client, patch("collect_leads.subprocess.run") as trust, \
+            with patch.dict(os.environ, {"HTTPS_PROXY": "http://proxy.example:1234",
+                                      "APP_API_TOKEN": "synthetic-secret", "RESEND_API_KEY": "synthetic-secret"}), \
+                 patch("collect_leads.collector_status", return_value={"ready": True}), \
+                 patch("collect_leads.local_browser_paths", return_value=("fixture-node", "fixture-package", "fixture-edge" if os.name == "nt" else "")), \
+                 patch("collect_leads.httpx.Client") as client, patch("collect_leads.subprocess.run") as trust, \
                  patch("collect_leads.run_local", side_effect=fake_browser) as browser, patch("collect_leads.run_docker") as docker:
                 client.return_value.__enter__.return_value.get.return_value.status_code = 200
                 path = collect("synthetic fixture only", root, 1, runtime="local")
@@ -92,13 +170,41 @@ class LocalCollectorTests(unittest.TestCase):
                 self.assertTrue(all(call.args[0][0] == "certutil" for call in trust.call_args_list))
 
     def test_failed_preflight_creates_no_output_and_never_uses_fixture_fallback(self):
-        with tempfile.TemporaryDirectory() as directory, patch("collect_leads.httpx.Client") as client, \
+        with tempfile.TemporaryDirectory() as directory, patch("collect_leads.collector_status", return_value={"ready": True}), \
+             patch("collect_leads.httpx.Client") as client, \
              patch("collect_leads.run_local") as browser:
             client.return_value.__enter__.return_value.get.return_value.status_code = 403
             with self.assertRaisesRegex(RuntimeError, "no scraper job was started"):
                 collect("real search cannot run", Path(directory), 1, runtime="local")
             self.assertEqual(list(Path(directory).iterdir()), [])
             browser.assert_not_called()
+
+    def test_known_local_browser_failures_have_safe_actionable_messages(self):
+        cases = (("maps_results_unavailable", "readable listing cards"),
+                 ("browser_closed", "page closed unexpectedly"),
+                 ("maps_navigation_failed", "could not open the Maps search page"),
+                 ("maps_place_page", "place or city page"))
+        for code, expected in cases:
+            with self.subTest(code=code), tempfile.TemporaryDirectory() as directory, \
+                 patch("collect_leads.collector_status", return_value={"ready": True}), \
+                 patch("collect_leads.local_browser_paths", return_value=("fixture-node", "fixture-package", "fixture-edge")), \
+                 patch("collect_leads.httpx.Client") as client, \
+                 patch("collect_leads.run_local", return_value=subprocess.CompletedProcess([], 1, "", f"COLLECTOR_ERROR_CODE={code}\n")):
+                client.return_value.__enter__.return_value.get.return_value.status_code = 200
+                with self.assertRaises(CollectorUnavailable) as raised:
+                    collect("synthetic fixture only", Path(directory), 1, runtime="local")
+                self.assertIn(expected, str(raised.exception))
+                self.assertIn("No leads were imported", str(raised.exception))
+                self.assertFalse(any(Path(directory).rglob("results.csv")))
+
+    def test_missing_browser_prevents_network_and_output(self):
+        with tempfile.TemporaryDirectory() as directory, \
+             patch("collect_leads.collector_status", return_value={"ready": False, "message": "Browser unavailable."}), \
+             patch("collect_leads.httpx.Client") as client:
+            with self.assertRaisesRegex(RuntimeError, "Browser unavailable"):
+                collect("synthetic fixture only", Path(directory), runtime="docker")
+            client.assert_not_called()
+            self.assertEqual(list(Path(directory).iterdir()), [])
 
     def test_local_browser_timeout_terminates_only_its_owned_process(self):
         for needs_kill in (False, True):

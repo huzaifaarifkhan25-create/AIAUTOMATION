@@ -2,7 +2,7 @@ const $ = (selector, parent = document) => parent.querySelector(selector);
 const content = $('#content');
 const leadDialog = $('#lead-dialog');
 const authDialog = $('#auth-dialog');
-const state = { token: '', businesses: [], analyses: [], qualifications: [], workflows: [], jobs: [], appointments: [], runs: [], outbox: [], reminderIntent: null, clients: [], deployments: [], tasks: [], operations: null, intents: {}, managedChoice: '', proofChoice: '', capabilities: {}, loaded: false, stale: false, demo: false, search: '', filter: 'all', sort: 'priority', selected: null, preview: null };
+const state = { token: '', businesses: [], analyses: [], qualifications: [], workflows: [], jobs: [], appointments: [], runs: [], outbox: [], reminderIntent: null, clients: [], deployments: [], tasks: [], operations: null, intents: {}, managedChoice: '', proofChoice: '', collectorStatus: null, capabilities: {}, loaded: false, stale: false, demo: false, search: '', filter: 'all', sort: 'priority', selected: null, preview: null, pendingPilotId: null };
 const titles = { overview: 'Overview', leads: 'Leads & research', discovery: 'Discover & import', workflows: 'Workflow drafts', connections: 'Connections', automation: 'Automation lab', clients: 'Clients', tasks: 'Follow-up tasks', operations: 'Operations' };
 const criteria = { inquiry_followup: 'Inquiry follow-up', appointment_reminders: 'Appointment reminders', consultation_followup: 'Consultation follow-up', rebooking: 'Client rebooking', public_email: 'Public business email', business_phone: 'Business phone', inquiry_form: 'Inquiry form', operational_scale: 'Operational scale', recurring_services: 'Recurring services', booking_friction: 'Booking friction', inquiry_friction: 'Inquiry friction', intake_friction: 'Intake friction' };
 const operational = new Set(['inquiry_followup', 'appointment_reminders', 'consultation_followup', 'rebooking']);
@@ -48,8 +48,8 @@ function lock() {
   loadGeneration++; sessionGeneration++;
   state.token = ''; state.loaded = false; state.selected = null; state.preview = null;
   for (const key of ['businesses', 'analyses', 'qualifications', 'workflows', 'jobs', 'appointments', 'runs', 'outbox', 'clients', 'deployments', 'tasks']) state[key] = [];
-  state.reminderIntent = null; state.intents = {}; state.managedChoice = ''; state.proofChoice = ''; state.operations = null;
-  state.capabilities = {}; leadDialog.close(); $('#lead-content').replaceChildren();
+  state.reminderIntent = null; state.intents = {}; state.managedChoice = ''; state.proofChoice = ''; state.operations = null; state.pendingPilotId = null;
+  state.capabilities = {}; state.collectorStatus = null; leadDialog.close(); $('#lead-content').replaceChildren();
   clearGlobalSearch(); $('#global-search').disabled = true;
   content.replaceChildren(el('div', 'empty-state', 'Unlock the workspace to load its data.'));
   $('#connection-status').textContent = 'Locked'; $('#lock').hidden = true;
@@ -91,7 +91,7 @@ async function load() {
     if (generation !== loadGeneration) return;
     const [clients, deployments, tasks, operations] = capabilities.client_workflow_activation_supported ? await Promise.all([pages('/clients'), pages('/deployments'), pages('/tasks'), api(`/operations/summary?include_demo=${state.demo}`)]) : [[], [], [], null];
     if (generation !== loadGeneration) return;
-    Object.assign(state, { capabilities, businesses, analyses, qualifications, workflows, jobs, appointments, runs, outbox, clients, deployments, tasks, operations, loaded: true, stale: false });
+    Object.assign(state, { capabilities, businesses, analyses, qualifications, workflows, jobs, appointments, runs, outbox, clients, deployments, tasks, operations, collectorStatus: null, loaded: true, stale: false });
     $('#connection-status').textContent = `${human(ready.persistence)} connected`; $('#connection-status').className = 'badge good';
     $('#lock').hidden = !state.token; $('#global-search').disabled = false; render();
   } catch (error) {
@@ -135,6 +135,7 @@ function empty(title, detail, action) { return el('div', 'empty-state', '', [el(
 function heading(eyebrow, title, subtitle, action) { return el('div', 'page-heading', '', [el('div', '', '', [el('div', 'eyebrow', eyebrow), el('h1', '', title), el('p', 'subtitle', subtitle)]), action]); }
 function stat(label, value, caption, icon = '↗') { return el('div', 'stat', '', [el('div', 'stat-label', '', [el('span', '', label), el('span', 'stat-icon', icon)]), el('strong', 'stat-value', value), el('span', 'stat-caption', caption)]); }
 function cardHeader(title, subtitle, action) { return el('div', 'card-header', '', [el('div', '', '', [el('h2', '', title), el('p', '', subtitle)]), action]); }
+function scrollTable(table) { return el('div', '', '', [el('div', 'mobile-table-hint', 'Swipe sideways to see more columns →'), el('div', 'table-scroll', '', [table])]); }
 function status(analysis) { return !analysis ? badge('Not analyzed') : analysis.provisional ? badge('Need review provisional', 'research') : badge(`Need priority: ${human(analysis.priority)}`, analysis.priority === 'high' ? 'good' : 'neutral'); }
 function leadTable(leads, full = false) {
   if (!leads.length) return empty('No leads in this view', 'Collect a small pilot or import a scraper CSV to start researching.', link('Discover leads →', '#discovery', 'button'));
@@ -151,12 +152,14 @@ function leadTable(leads, full = false) {
     const score = el('span', 'score-value', analysis && q ? q.prospect_score : '—'); if (analysis && q) score.append(el('small', '', ' / 100'));
     body.append(el('tr', '', '', [el('td', '', '', [cell]), el('td', '', '', [badge(sources[record.source] || human(record.source), record.source === 'mock' ? 'demo' : 'neutral')]), el('td', '', '', [score, el('div', 'status-detail', '', [prospectStatus(q)])]), el('td', '', '', [coverage]), el('td', '', '', [needStatus(q)])]));
   }
-  table.append(body); return el('div', 'table-scroll', '', [table]);
+  table.append(body); return scrollTable(table);
 }
 function render() {
   if (!state.loaded) return;
   const current = view(); $('#breadcrumb').textContent = titles[current]; document.title = `${titles[current]} · AIAutomation`;
   document.querySelectorAll('[data-view]').forEach(node => { const active = node.dataset.view === current; node.classList.toggle('active', active); if (active) node.setAttribute('aria-current', 'page'); else node.removeAttribute('aria-current'); });
+  $('#mobile-section-current').textContent = titles[current];
+  document.querySelectorAll('[data-mobile-view]').forEach(node => { const active = node.dataset.mobileView === current; node.classList.toggle('active', active); if (active) node.setAttribute('aria-current', 'page'); else node.removeAttribute('aria-current'); });
   content.replaceChildren(); updateGlobalSearch();
   if (state.stale) content.append(el('div', 'callout', 'Connection failed. The data below is from the last successful load and may be out of date. Refresh before making changes.'));
   if (state.demo) content.append(el('div', 'callout', 'Demo leads are included in this view. Their businesses and evidence are fictional.'));
@@ -165,7 +168,8 @@ function render() {
 function renderOverview() {
   const leads = records(), ready = leads.filter(r => prospectReady(r.id)), confirmed = leads.filter(r => qualification(r.id)?.need_status === 'confirmed_gap');
   const workflows = state.workflows.filter(w => leads.some(r => r.id === w.business_id) && w.status === 'draft');
-  content.append(heading('SALES WORKSPACE', 'Overview', 'Your med spa prospects, research and next actions.', link('+ Discover leads', '#discovery', 'button primary')));
+  const hero = heading('SALES WORKSPACE', 'Overview', 'Your med spa prospects, research and next actions.', link('+ Discover leads', '#discovery', 'button primary'));
+  hero.classList.add('overview-hero'); content.append(hero);
   content.append(el('div', 'overview-context', '', [el('span', '', 'Sales overview'), el('span', 'context-note', 'Saved leads and recorded activity')]));
   content.append(el('div', 'stats', '', [stat('Saved leads', leads.length, state.demo ? 'Includes fictional demo records' : 'Demo records excluded', '▤'), stat('Prospects to review', ready.length, 'Public fit + contact evidence', '⌕'), stat('Confirmed gaps', confirmed.length, 'Business confirmation recorded', '✧'), stat('Workflow drafts', workflows.length, 'Saved definitions · not running', '→')]));
   const candidates = [...leads].sort(compareProspects).slice(0, 6);
@@ -218,23 +222,65 @@ function submit(form, text, action) {
   const node = el('button', 'button primary', text); node.type = 'submit';
   form.addEventListener('submit', event => { event.preventDefault(); if (form.reportValidity()) busy(node, action); }); form.append(node); return node;
 }
+function discoverySearchQuery(value) {
+  const query = value.trim().replace(/\s+/g, ' ');
+  const hasBusinessType = /\b(?:med\s*spas?|medical\s*spas?|spas?|clinics?|aesthetics?|dermatolog(?:y|ists?)|laser|cosmetic|beauty|massage|wellness|skin\s*care)\b/i.test(query);
+  return hasBusinessType ? query : `medical spas in ${query}`;
+}
 function renderDiscovery() {
-  content.append(heading('DISCOVER & IMPORT', 'Discover & import', 'A small live pilot or a CSV from your scraper. Preview first, save second.'));
-  const pilot = el('form', 'card-body');
-  const query = el('input'); query.required = true; query.maxLength = 300; query.placeholder = 'medical spas in New York NY';
+  content.append(heading('BUILD YOUR PIPELINE', 'Discover businesses', 'Collect a small sample or bring your own CSV. Review every result before saving.'));
+  content.append(el('div', 'discovery-steps', '', [el('span', '', '01  Collect'), el('span', '', '02  Preview'), el('span', '', '03  Import')]));
+  const pilot = el('form', 'card-body discovery-form');
+  const query = el('input'); query.required = true; query.maxLength = 300; query.placeholder = 'Islamabad, Pakistan';
   const limit = el('input'); limit.type = 'number'; limit.min = '1'; limit.max = '10'; limit.value = '5'; limit.required = true;
-  pilot.append(el('h2', '', 'Google Maps browser pilot'), el('p', 'muted', 'Collect a sample of visible public listings. No paid provider key is needed.'), field('Business + location query', query), field('Maximum listings', limit, '1–10 listings. This pilot does not collect a complete directory.'), el('div', 'callout', 'A successful run retains a CSV and source pages. Check business relevance and details yourself. Failed runs import nothing.'));
+  const collectorPanel = el('div', 'collector-panel'); collectorPanel.id = 'collector-status';
+  const pilotSummary = el('div', 'pilot-result-summary'); pilotSummary.id = 'pilot-result-summary';
+  const importCard = el('section', 'card discovery-card discovery-import'); importCard.id = 'discovery-import';
+  pilot.append(el('div', 'discovery-card-kicker', 'OPTION 01 · LIVE COLLECTION'), el('h2', '', 'Find med spas on Maps'), el('p', 'muted', 'Collect up to ten visible listings with the local Edge or bundled browser. Results stay in a preview until you choose to import them.'), field('City or business + location', query, 'Enter a city such as “Islamabad, Pakistan”; the pilot searches for medical spas there. You can also enter a full business + location query.'), field('Maximum listings', limit, '1–10 listings; this is a small sample, not a complete directory.'), collectorPanel);
   const startPilot = submit(pilot, 'Start live pilot →', async () => {
-    const job = await post('/discovery/jobs', { query: query.value.trim(), limit: Number(limit.value) }); state.jobs.unshift(job); renderJobs(); notice('Live pilot started. You can leave this screen and return to its saved status.');
+    if (state.jobs.some(job => ['queued', 'running'].includes(job.status))) throw new Error('A live pilot is already running. Wait for its result before starting another.');
+    const search = discoverySearchQuery(query.value);
+    if (search.length > 300) throw new Error('The search is too long. Shorten the city or business name.');
+    query.value = search;
+    const job = await post('/discovery/jobs', { query: search, limit: Number(limit.value) }); state.pendingPilotId = job.id; state.preview = null; state.jobs.unshift(job); renderPreview(); renderJobs(); notice(`Searching Maps for “${search}”. Its result count and preview will appear here when it finishes.`);
   });
-  startPilot.disabled = !state.capabilities.browser_collection_configured;
-  if (startPilot.disabled) pilot.append(el('p', 'error-text', 'The browser collector is not configured on this server. CSV imports are available.'));
-  const upload = el('form', 'card-body');
+  startPilot.disabled = true;
+  const manualMaps = link('Open Google Maps ↗', 'https://www.google.com/maps/', 'button discovery-maps-link');
+  manualMaps.target = '_blank'; manualMaps.rel = 'noopener noreferrer';
+  manualMaps.addEventListener('click', event => {
+    if (!query.value.trim()) { event.preventDefault(); query.reportValidity(); return; }
+    const search = discoverySearchQuery(query.value);
+    if (search.length > 300) { event.preventDefault(); notice('The search is too long. Shorten the city or business name.', true); return; }
+    query.value = search;
+    manualMaps.href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(search)}`;
+  });
+  pilot.append(el('div', 'discovery-actions', '', [manualMaps]));
+  pilot.append(el('p', 'discovery-footnote', 'Open Maps for manual review without Docker. Use your own CSV export for import; opening Maps does not save leads.'));
+  pilot.append(el('p', 'discovery-footnote', 'A successful pilot saves its source pages and CSV. Review category, address and contact details before import.'));
+  pilot.append(pilotSummary);
+  const session = sessionGeneration;
+  const active = () => session === sessionGeneration && state.loaded && view() === 'discovery';
+  const paintCollector = result => {
+    if (!active()) return;
+    collectorPanel.className = `collector-panel ${result.ready ? 'is-ready' : 'is-blocked'}`;
+    collectorPanel.replaceChildren(el('span', 'collector-dot', ''), el('div', '', '', [el('strong', '', result.ready ? 'Browser setup ready' : result.code === 'checking' ? 'Checking browser' : 'Live pilot unavailable here'), el('p', '', result.message)]), button('Check again', checkCollector, 'small'));
+    startPilot.disabled = !result.ready;
+  };
+  const checkCollector = async () => {
+    const result = await api('/discovery/collector-status');
+    if (active()) { state.collectorStatus = result; paintCollector(result); }
+  };
+  if (state.collectorStatus) paintCollector(state.collectorStatus);
+  else {
+    paintCollector({ ready: false, code: 'checking', message: 'Checking the local browser…' });
+    checkCollector().catch(error => { if (active()) paintCollector({ ready: false, code: 'unavailable', message: error.message }); });
+  }
+  const upload = el('form', 'card-body discovery-form');
   const file = el('input'); file.type = 'file'; file.accept = '.csv,text/csv'; file.required = true;
   const source = select([['csv', 'Other CSV export'], ['instant_data_scraper', 'Instant Data Scraper'], ['web_scraper', 'Web Scraper extension'], ['gosom', 'Gosom scraper']], 'csv');
   const time = el('input'); time.type = 'datetime-local'; time.max = localTime();
   const mapping = el('textarea'); mapping.rows = 2; mapping.placeholder = '{"name":"Business name","address":"Full address"}';
-  upload.append(el('h2', '', 'Import a scraper CSV'), el('p', 'muted', 'Bring an export from a browser extension or another business-data scraper.'), field('CSV file', file, 'UTF-8 CSV, at most 2 MB and 2,000 rows. Business name and address are required.'), field('Export source', source), field('Collection time (your local time)', time, 'Optional. If omitted, the import time is recorded; it does not verify when the data was scraped.'), field('Column mapping (optional JSON)', mapping, 'Common column names are detected automatically. Use exact CSV headers for custom mapping.'));
+  upload.append(el('div', 'discovery-card-kicker', 'OPTION 02 · CSV IMPORT'), el('h2', '', 'Import a prepared list'), el('p', 'muted', 'Use a browser extension or scraper export. The preview checks rows and duplicates before anything is saved.'), field('CSV file', file, 'UTF-8 CSV, at most 2 MB and 2,000 rows. Business name and address are required.'), el('div', 'discovery-form-pair', '', [field('Export source', source), field('Collection time (your local time)', time, 'If omitted, import time is recorded; this does not verify scrape time.')]), field('Column mapping (optional JSON)', mapping, 'Common headers are detected automatically. Use exact CSV headers for custom mapping.'));
   const invalidate = () => { if (state.preview?.kind === 'upload') { state.preview = null; $('#preview-region')?.replaceChildren(); } };
   for (const control of [file, source, time, mapping]) control.addEventListener('input', invalidate);
   submit(upload, 'Preview CSV →', async () => {
@@ -248,21 +294,45 @@ function renderDiscovery() {
     if (file.files[0] !== selected || source.value !== selection.source || time.value !== selection.time || mapping.value !== selection.mapping) throw new Error('The file or import settings changed while the preview was loading. Preview the current selection again.');
     state.preview = { kind: 'upload', parameters, data, report, name: selected.name }; renderPreview();
   });
-  content.append(el('div', 'two-columns', '', [el('section', 'card', '', [pilot]), el('section', 'card', '', [upload])]));
-  const jobs = el('section', 'card'); jobs.id = 'jobs-region'; jobs.style.marginTop = '24px';
+  importCard.append(upload);
+  content.append(el('div', 'discovery-grid', '', [el('section', 'card discovery-card discovery-pilot', '', [pilot]), importCard]));
+  const jobs = el('section', 'card discovery-jobs'); jobs.id = 'jobs-region';
   const preview = el('section', 'preview'); preview.id = 'preview-region'; content.append(jobs, preview); renderJobs(); renderPreview();
 }
 function renderJobs() {
   const region = $('#jobs-region'); if (!region) return;
-  region.replaceChildren(cardHeader('Recent live pilots', 'Status is saved. A successful pilot still needs preview and import.', badge('Up to 10 listings / pilot')));
+  renderPilotSummary();
+  region.replaceChildren(cardHeader('Recent pilot activity', 'Every run stays here. Preview a successful result before importing; failed runs save no leads.', badge('At most 10 listings')));
   if (!state.jobs.length) { region.append(empty('No pilots yet', 'Start a small query above, or use a CSV export.')); return; }
   for (const job of state.jobs.slice(0, 10)) {
     const row = el('div', 'job', '', [el('div', 'row space-between', '', [el('h3', '', job.query), badge(human(job.status), job.status === 'succeeded' ? 'good' : ['failed', 'interrupted'].includes(job.status) ? 'error' : 'research')]), el('div', 'muted', `${date(job.created_at)} · Limit ${job.limit}${job.collected_count != null ? ` · ${job.collected_count} collected` : ''}`)]);
-    if (job.error) row.append(el('p', 'error-text', job.error));
-    if (job.status === 'succeeded') row.append(el('div', 'row', '', [button('Preview results', async () => { const report = await post(`/discovery/jobs/${job.id}/preview`, {}); state.preview = { kind: 'pilot', jobId: job.id, report, name: job.query }; renderPreview(); $('#preview-region').scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 'small'), button('Download CSV', async () => saveBlob(await api(`/discovery/jobs/${job.id}/csv`, { blob: true }), 'results.csv'), 'small')]));
+    if (job.error) row.append(el('p', 'job-error', job.error));
+    if (job.status === 'failed' && job.error?.startsWith('Live collection failed or produced invalid output.')) row.append(el('p', 'status-detail', 'This run saved only a generic failure message. Its exact cause cannot be recovered; a new pilot will show a more specific reason when the collector recognizes it.'));
+    if (job.status === 'failed') row.append(button('Review pilot options ↑', () => $('#collector-status')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 'small'));
+    if (job.status === 'succeeded') row.append(el('div', 'row', '', [button('Preview results', () => showPilotPreview(job), 'small'), button('Download raw CSV', async () => saveBlob(await api(`/discovery/jobs/${job.id}/csv`, { blob: true }), 'results.csv'), 'small'), button('Download spreadsheet CSV', async () => saveBlob(await api(`/discovery/jobs/${job.id}/spreadsheet.csv`, { blob: true }), 'results-spreadsheet.csv'), 'small')]));
     if (['queued', 'running'].includes(job.status)) row.append(el('p', 'status-detail', 'The pilot may take up to several minutes. No leads have been imported.'));
     region.append(row);
   }
+}
+function renderPilotSummary() {
+  const region = $('#pilot-result-summary'); if (!region) return;
+  const job = state.jobs[0]; region.replaceChildren();
+  if (!job) return;
+  if (['queued', 'running'].includes(job.status)) {
+    region.append(el('strong', '', 'Searching Maps…'), el('p', '', 'The collector opens listings one at a time. Its Edge window closes after the run; nothing is imported automatically.'));
+  } else if (job.status === 'succeeded') {
+    const count = job.collected_count || 0;
+    region.append(el('strong', '', `${count} listing${count === 1 ? '' : 's'} captured`), el('p', '', 'Open the preview to see names, categories and details. These are search results, not verified med spas; no leads were imported automatically.'), button(`Show ${count} listing${count === 1 ? '' : 's'}`, () => showPilotPreview(job), 'small'));
+  } else if (job.status === 'failed') {
+    region.append(el('strong', '', 'Latest pilot did not produce a preview'), el('p', '', 'See the saved reason in Recent pilot activity below. No leads were imported.'));
+  }
+}
+async function showPilotPreview(job) {
+  const session = sessionGeneration;
+  const report = await post(`/discovery/jobs/${job.id}/preview`, {});
+  if (session !== sessionGeneration || !state.loaded || view() !== 'discovery') return;
+  state.preview = { kind: 'pilot', jobId: job.id, report, name: job.query };
+  renderPreview(); $('#preview-region')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 function renderPreview() {
   const region = $('#preview-region'); if (!region) return; region.replaceChildren();
@@ -273,18 +343,29 @@ function renderPreview() {
   if (r.ignored_columns.length) body.append(el('p', 'muted long-wrap', `Ignored columns: ${r.ignored_columns.join(', ')}`));
   if (r.dry_run) {
     body.append(el('p', 'muted', 'Confirm these are relevant med spas and inspect the fields. Import saves valid new rows, skips duplicates, and skips invalid rows. Source selection is your statement, not independent verification.'));
+    let categoryReview = null;
+    if (preview.kind === 'pilot') {
+      categoryReview = el('input'); categoryReview.type = 'checkbox';
+      body.append(el('label', 'discovery-review-confirmation', '', [categoryReview, el('span', '', 'I checked each Maps category and confirmed these are relevant med spas or medical aesthetics businesses.') ]));
+    }
     const commit = button(`Import ${r.valid_rows} valid new lead${r.valid_rows === 1 ? '' : 's'}`, async () => {
       let result;
       if (preview.kind === 'pilot') result = await post(`/discovery/jobs/${preview.jobId}/import`, {});
       else { const params = new URLSearchParams(preview.parameters); params.set('dry_run', 'false'); result = await api(`/businesses/import-csv?${params}`, { method: 'POST', headers: { 'Content-Type': 'text/csv' }, body: preview.data }); }
       preview.report = result; await load(); notice(`${result.imported_rows} leads saved. ${result.duplicate_rows} duplicates and ${result.invalid_rows} invalid rows skipped.`);
-    }, 'primary'); commit.disabled = !r.valid_rows; body.append(commit);
+    }, 'primary');
+    commit.disabled = !r.valid_rows || Boolean(categoryReview);
+    categoryReview?.addEventListener('change', () => { commit.disabled = !r.valid_rows || !categoryReview.checked; });
+    body.append(commit);
   }
   card.append(body);
-  const table = el('table'); const head = el('tr'); for (const title of ['ROW', 'BUSINESS', 'STATUS', 'ISSUES']) head.append(el('th', '', title)); table.append(el('thead', '', '', [head]));
+  const table = el('table'); const head = el('tr'); for (const title of ['ROW', 'BUSINESS', 'CATEGORY', 'STATUS', 'ISSUES']) head.append(el('th', '', title)); table.append(el('thead', '', '', [head]));
   const rows = el('tbody');
-  for (const row of r.rows) rows.append(el('tr', '', '', [el('td', '', row.row_number), el('td', '', '', [el('strong', '', row.business?.name || 'Invalid business'), el('div', 'muted', row.business?.address || ''), el('div', 'status-detail', [row.business?.phone, row.business?.website].filter(Boolean).join(' · '))]), el('td', '', '', [badge(human(row.status), row.status === 'invalid' ? 'error' : 'neutral')]), el('td', '', '', [el('div', 'error-text', row.errors.join(' · ')), el('div', 'muted', row.warnings.join(' · '))])]));
-  table.append(rows); card.append(el('div', 'table-scroll', '', [table])); region.append(card);
+  for (const row of r.rows) {
+    const category = row.warnings.find(warning => warning.startsWith('Source category: '));
+    rows.append(el('tr', '', '', [el('td', '', row.row_number), el('td', '', '', [el('strong', '', row.business?.name || 'Invalid business'), el('div', 'muted', row.business?.address || ''), el('div', 'status-detail', [row.business?.phone, row.business?.website].filter(Boolean).join(' · '))]), el('td', '', category ? category.slice('Source category: '.length) : 'Not supplied'), el('td', '', '', [badge(human(row.status), row.status === 'invalid' ? 'error' : 'neutral')]), el('td', '', '', [el('div', 'error-text', row.errors.join(' · ')), el('div', 'muted', row.warnings.filter(warning => warning !== category).join(' · '))])]));
+  }
+  table.append(rows); card.append(scrollTable(table)); region.append(card);
 }
 function saveBlob(blob, name) { const url = URL.createObjectURL(blob), a = link('', url); a.download = name; document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000); }
 function saveJSON(value, name) { saveBlob(new Blob([JSON.stringify(value, null, 2)], { type: 'application/json' }), name); }
@@ -461,7 +542,7 @@ function renderAutomation() {
     context.addEventListener('change', applyContext); applyContext();
     form.append(el('h2', '', 'Schedule sandbox reminder'));
     form.append(field('Client deployment (optional)', context, 'An active sandbox deployment applies client pause and validation controls.'));
-    form.append(field('Reminder workflow', workflow), field('Synthetic contact reference', contact), field('Appointment starts', starts), field('Reminder time', scheduled), field('Reminder preview text', message), field('Permission recorded for this synthetic contact', permission), field('I understand this creates an unsent sandbox preview', confirmed));
+    form.append(field('Reminder workflow', workflow), field('Synthetic contact reference', contact), field('Appointment starts', starts), field('Reminder time', scheduled), field('Reminder preview text', message), el('label', 'check-label reminder-consent', '', [permission, el('span', '', 'Permission recorded for this synthetic contact')]), el('label', 'check-label reminder-consent', '', [confirmed, el('span', '', 'I understand this creates an unsent sandbox preview')]));
     const pending = state.reminderIntent;
     if (pending) {
       const body = pending.body; workflow.value = body.workflow_id; contact.value = body.reminder.event.contact_id;
@@ -690,12 +771,31 @@ $('#auth-form').onsubmit = event => {
   });
 };
 authDialog.addEventListener('cancel', event => event.preventDefault());
-window.addEventListener('hashchange', render);
+const mobileSections = $('#mobile-sections');
+for (const item of document.querySelectorAll('nav a[data-view]')) {
+  const choice = link(item.textContent.trim(), item.getAttribute('href'));
+  choice.dataset.mobileView = item.dataset.view;
+  choice.addEventListener('click', () => { mobileSections.open = false; });
+  $('#mobile-section-list').append(choice);
+}
+mobileSections.addEventListener('keydown', event => { if (event.key === 'Escape') { mobileSections.open = false; mobileSections.querySelector('summary').focus(); } });
+document.addEventListener('click', event => { if (!mobileSections.contains(event.target)) mobileSections.open = false; });
+window.addEventListener('hashchange', () => { mobileSections.open = false; if (leadDialog.open) { leadDialog.close(); state.selected = null; } render(); });
 let polling = false;
 setInterval(async () => {
   if (!state.loaded || polling || !state.jobs.some(job => ['queued', 'running'].includes(job.status))) return;
   polling = true;
-  try { state.jobs = await api('/discovery/jobs'); renderJobs(); }
+  try {
+    state.jobs = await api('/discovery/jobs'); renderJobs();
+    const finished = state.jobs.find(job => job.id === state.pendingPilotId && !['queued', 'running'].includes(job.status));
+    if (finished) {
+      state.pendingPilotId = null;
+      if (finished.status === 'succeeded' && view() === 'discovery' && !state.preview) {
+        await showPilotPreview(finished);
+        notice(`${finished.collected_count} listings captured. Review categories and details before importing; nothing was saved automatically.`);
+      } else if (finished.status === 'failed' && view() === 'discovery') notice(finished.error || 'The pilot failed before producing a preview.', true);
+    }
+  }
   catch (error) { notice(error.message, true); }
   finally { polling = false; }
 }, 3000);

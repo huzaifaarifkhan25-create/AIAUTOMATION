@@ -36,8 +36,22 @@ Maps behavior are not independently verified here because vendor sites are restr
 
 ## Installed browser runtime
 
-Development's default Docker runtime requires a running Docker daemon and
-certutil (libnss3-tools). The release image bundles certutil, Node, and Chromium
+On Windows, the app now defaults to `BROWSER_RUNTIME=local`. The optional
+`SETUP-WINDOWS-COLLECTOR.bat` installs pinned `playwright-core` into ignored
+`.local/browser-tools` and uses the installed Microsoft Edge browser and Node.
+This needs no Docker image. The child browser receives only its runtime,
+working directory and network variables plus Windows `SystemRoot`, not app
+tokens or provider keys. Browser certificate verification remains enabled.
+A one-listing New York pilot succeeded on 2026-10-09 with its source page,
+manifest and matching CSV hash; it was not imported. The app shows live
+readiness before enabling Start, but network access and listing quality still
+require a result preview on every run. The **Open Google Maps** link is a
+manual option when neither automated collector is ready.
+
+Linux development's default Docker runtime requires a running Docker daemon and
+certutil (libnss3-tools) on Linux. On Windows the Docker collector uses the
+container/browser trust store and does not invoke Windows' unrelated `certutil`.
+The release image bundles certutil, Node, and Chromium
 and uses BROWSER_RUNTIME=local, running the collector inside the app container.
 It needs no Docker CLI or socket. SCRAPE_OUTPUT_DIR sets the API job artifact
 directory; the release default is `/data/scrapes`. See
@@ -48,6 +62,14 @@ The image is pinned by digest:
 docker pull gosom/google-maps-scraper@sha256:e205c02913c5a69c16fc2094b8e5b194a2f655166d2c1126d50548d216e6b1b2
 docker run --rm --network none -e DISABLE_TELEMETRY=1 gosom/google-maps-scraper@sha256:e205c02913c5a69c16fc2094b8e5b194a2f655166d2c1126d50548d216e6b1b2 -version
 ```
+
+On the checked Windows laptop Docker Desktop started, but the pinned image was
+absent and C: initially had about 153 MB free. After free space rose to about
+3.2 GB, an exact pinned-image pull was attempted. It transferred no visible
+layers, the daemon stopped responding promptly, and the pull was interrupted.
+No app collector run occurred. A separate visible Edge check reached Google
+Maps and a medical-spa listing, but this does not verify the bundled collector.
+See [LIVE_INTEGRATION_CHECKS.md](LIVE_INTEGRATION_CHECKS.md).
 
 Download, checksum verification through Docker, CLI help, and version
 v1.18.1-549e4b5 were verified. Google Maps access now works. On 2026-10-06,
@@ -142,7 +164,12 @@ HTTP 202, and does not import leads. Poll `GET /discovery/jobs/{id}` for queued,
 running, succeeded, failed, or interrupted status. Only a successful job can be
 previewed with `POST /discovery/jobs/{id}/preview`; saving requires a separate
 `POST /discovery/jobs/{id}/import`. `GET /discovery/jobs/{id}/csv` downloads the
-original output. These routes use the same bearer authentication as other data routes.
+original output for re-import and provenance. `GET /discovery/jobs/{id}/spreadsheet.csv`
+downloads a separate viewing copy that prefixes common formula-leading cells as
+text and replaces embedded tabs/newlines with spaces. Spreadsheet applications
+can interpret CSV differently, so review the file before opening it. Its values
+can differ from the raw source; use the original CSV for re-import. These routes
+use the same bearer authentication as other data routes.
 The service checks the retained CSV against its original SHA-256 before preview,
 download, or import. Missing/modified output is rejected. Repeated imports skip duplicates.
 The query, collection time, count, and hash are retained on the job; internal file

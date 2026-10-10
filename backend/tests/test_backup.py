@@ -1,5 +1,6 @@
 import hashlib
 import json
+import shutil
 import tempfile
 import unittest
 from pathlib import Path
@@ -28,13 +29,25 @@ class BackupTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_restored_database_and_artifacts_work_after_original_artifacts_are_removed(self):
         folder = backup(self.db, self.scrapes, self.root / "backups")
+        shutil.rmtree(self.scrapes)
         recovered = restore(folder, self.root / "recovered")
-        self.csv.unlink()
         store = SQLiteStore(str(recovered / "backend.sqlite3"))
         self.assertEqual(await store.get("businesses", "synthetic"), {"id": "synthetic", "source": "csv"})
         job = await store.get("discovery_jobs", "synthetic-job")
         self.assertEqual(Discovery(store, recovered / "scrapes").result(job), b"name,address\nSynthetic backup fixture,Fixture address\n")
         self.assertEqual(await self.store.get("discovery_jobs", "synthetic-job"), self.job)
+
+    async def test_portable_manifest_and_legacy_windows_names_restore(self):
+        folder = backup(self.db, self.scrapes, self.root / "backups")
+        manifest_path = folder / "manifest.json"
+        manifest = json.loads(manifest_path.read_text())
+        self.assertIn("scrapes/fixture/results.csv", manifest["files"])
+        manifest["files"] = {name.replace("/", "\\"): digest for name, digest in manifest["files"].items()}
+        manifest_path.write_text(json.dumps(manifest))
+        shutil.rmtree(self.scrapes)
+        recovered = restore(folder, self.root / "recovered")
+        self.assertEqual((recovered / "scrapes/fixture/results.csv").read_bytes(),
+                         b"name,address\nSynthetic backup fixture,Fixture address\n")
 
     async def test_changed_backup_is_rejected_before_creating_destination(self):
         folder = backup(self.db, self.scrapes, self.root / "backups")

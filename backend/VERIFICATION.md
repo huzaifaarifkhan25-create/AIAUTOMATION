@@ -1,5 +1,301 @@
 # Workspace milestone verification
 
+## Caller/email Level 0 and Level 1 — 2026-10-09
+
+Read `CALLER-EMAIL-INSTRUCTIONS.md`, `CODEX-INSTRUCTIONS.md`, and the repository instructions. The pre-code API/UI gap audit and the Level 1 handoff are in [LEVEL1-OUTREACH.md](LEVEL1-OUTREACH.md). Level 1 now has structured, saved, unsent email and call-script drafts; request-supplied sender profile; English, Urdu and Roman Urdu; source/date citation checks; no-analysis generic drafts; do-not-contact/archived generation guards; and a rule-based email fallback when Gemini is absent, rejects access, or returns invalid output. The lead detail page has separate panels, copy/download/encoded `mailto:` and validated `tel:` actions, and a manual activity form. Its links and draft actions are disabled for a known do-not-contact lead. The Next.js proxy still blocks provider call/send routes.
+
+Verification: the complete Python suite passed **199 tests** on Windows after the final backend changes. Focused AI/outreach tests passed **17** checks, including mocked provider response, invalid JSON retry, three languages, word limits, citation rejection, no-analysis drafts, do-not-contact, prompt-injection delimiter, no-key fallback, provider-denial fallback and manual log provenance. The frontend production build and TypeScript check passed; two Node link-encoding tests passed. The isolated production HTTP smoke passed login/reload lock, authenticated proxy, CSV import, unsent email fallback, manual activity, saved draft readback and a blocked call route. All automated tests use fictional records or mocked provider responses; none contacts a business. The primary SQLite database was not used for these tests or changed by this implementation. A later read-only primary check returned `integrity_check=ok` and 31 logical rows; other app activity occurred while this work was in progress, so this is not a before/after row-equivalence claim.
+
+The supplied credential was entered through the local hidden terminal prompt and `GET /capabilities` reported `gemini_configured=true`. Synthetic, read-only `POST /ai/chat` checks reached Google but returned HTTP **403**. This verifies that the key is loaded, **not** that Gemini is usable; the key/project access must be corrected. No live AI draft or script was claimed. The existing real CSV rows have massage/spa categories and no real analysis, so the requested three to four category-reviewed real med-spa drafts were not created. No Resend email, Twilio call, provider callback or other real contact occurred. Levels 2 and 3 were not started. The key shared in chat should be rotated. The UI was not manually opened or clicked in this milestone.
+
+## Gemini setup explanation and AI screen — 2026-10-09
+
+The earlier image supplied a Google Stitch design-tool key, while the running backend had no `GEMINI_API_KEY` in process/user environment and `/capabilities` returned `gemini_configured=false`. The AI page now explains that separation and offers a private Windows helper that prompts for a Gemini key without saving it. The same change made the sticky top bar opaque so page text no longer shows through it. `npm run typecheck`, `npm run build`, and `frontend/scripts/smoke.ps1` passed; an isolated headless Edge view of the AI setup screen found no page errors, horizontal overflow or browser key-entry field. The helper parsed and correctly refused to start a second backend on port 8000. No real key was entered, no Gemini API call was made, and the assistant remains unavailable until a Gemini credential is supplied privately and the backend restarted.
+
+## Next.js access lock and project status check — 2026-10-09
+
+The current source passed `python -m unittest discover -s tests -q` from `backend/` (**190 tests**), `npm run typecheck`, `npm run build`, and the isolated `frontend/scripts/smoke.ps1` production HTTP flow. The smoke covers access, full-document reload redirect/cookie clearing, authenticated proxy, CSV preview/import, invalid rows, duplicates and a blocked call route. A live local HTTP check returned 200 for backend health, frontend login/workflows and authenticated capabilities; Gemini, email and calls reported disabled, while SQLite and sandbox mode were available. A read-only primary SQLite check returned `integrity_check=ok` and 28 logical rows; no primary fixture writes occurred. These checks did not exercise live Gemini, Stitch, Maps collection, email, calls, deployment, or every new UI control. The current work and remaining items are summarized in [PROJECT-COMPLETION-REPORT.md](../PROJECT-COMPLETION-REPORT.md).
+
+## New interface visual clarification and polish — 2026-10-09
+
+The user's screenshot showed `127.0.0.1:8000/app/#workflows`, the preserved FastAPI fallback rather than the Next.js UI at `127.0.0.1:3000/workflows`. A read-only API check found five CSV businesses, one mock business, four analyses and three workflows; all three workflows belong to the mock business, with zero review-ready real prospects. The new UI now hides demo workflows/tasks by default, labels the optional demo graph, and does not rank unanalysed zero-score listings as top prospects. The design pass added consistent SVG navigation, purple workflow empty state, restrained ambient/card motion, loading feedback and reduced-motion support; `devIndicators` is disabled for local preview.
+
+`npm run build` passed after these frontend-only edits. The isolated `frontend/scripts/smoke.ps1` passed access/proxy, CSV preview/import, duplicate/invalid rows and blocked call route. Read-only headless Edge screenshots of the port-3000 desktop dashboard, desktop workflows and mobile workflows reported no page errors and no mobile horizontal overflow. No manual control sweep or live Gemini/Stitch request occurred. Primary SQLite remained `integrity_check=ok` with 28 logical rows after the checks. See [implementation status](../IMPLEMENTATION-STATUS.md) for phase-by-phase remaining work.
+
+## Additive Next.js, Gemini drafts and Stitch config — 2026-10-09
+
+Read `CODEX-INSTRUCTIONS.md` and the existing architecture/deployment docs before changes. Baseline Python suite: 182 tests passed. Added a separate Gemini service and authenticated `/ai/*` draft/read routes, with Pydantic output validation, bounded HTTP retries/timeouts, a fixed read-only chat tool whitelist, explicit proposal confirmation, and separate provenance-tagged `ai_insights` records. Existing analysis snapshots and scores are unchanged by AI output. The app starts without a Gemini key; AI requests then return a clear configuration error. `GET /capabilities` exposes key presence only. Unit tests use synthetic data and mocked provider responses, including success, invalid JSON, timeout, do-not-contact, prompt-injection delimiter and tool whitelist cases.
+
+Added `frontend/` as an optional Next.js/React Flow workspace. It has an HttpOnly signed shared demo gate, server-side bearer proxy with a narrow route/method allowlist, CSV preview/import, discovery status, leads/evidence, tasks, AI drafts/chat, workflow graph and sandbox reminder forms/history. The original `/app/` remains available. The owner-supplied purple dashboard screenshot is retained as `docs/design-reference/ui-2-dashboard.png`; the screenshot containing a key was not copied. The `.codex/config.toml` Stitch MCP entry contains only the `STITCH_API_KEY` environment-variable name.
+
+Final verification: `python -m unittest discover -s backend/tests -q` passed **190 tests** in 181.103 seconds; `npm run build` passed for Next.js 16.4.0; and `frontend/scripts/smoke.ps1` passed access-gate/proxy, isolated CSV preview/import, duplicate and invalid-row checks, plus blocking a call route. The smoke script uses a temporary SQLite file, synthetic access values and no business contact. No manual Edge/browser UI test was run, as requested. A read-only primary SQLite check returned `integrity_check=ok` and 28 logical rows; no primary writes were made by this work.
+
+No live Gemini or Stitch call was made because those keys were not configured in the environment. The key exposed in the user screenshot should be rotated before use. No Vercel/Python host account was connected and no public site was deployed. The new shared gate is for an isolated pilot, not individual authentication or a complete public-hosting security review. Maps collection, email delivery and calls were not reverified live in this milestone. This checkout has no `.git`, so the requested feature branch could not be created here. See `frontend/README.md` and `docs/STITCH-SETUP.md` for private setup and remaining owner actions.
+
+## Location-only Maps query correction — 2026-10-09
+
+Read-only inspection found two newer failed pilots: `New york` and `Islamabad
+pakistan`. Both retained only a query file, with no listing CSV or source page.
+The former saved `maps_results_unavailable`; the latter saved `browser_closed`.
+The user's screenshot shows Maps presenting New York as a city place page, which
+explains why a business-results collector can wait without seeing listing cards.
+The exact reason Edge closed during the Islamabad attempt remains unproven.
+Three earlier `medical spas in Islamabad, Pakistan` jobs succeeded with five
+captured listings each, so per-listing collection was not removed.
+
+The browser form now expands a city-only entry to `medical spas in <city>` and
+shows the actual query before collection. The collector reports a distinct safe
+error if Maps opens a single place/city page, including after a delayed redirect.
+The Edge-closed message no longer assumes the operator closed the window.
+Twenty-four targeted deployment/workspace tests passed with simulated failures;
+Node and Python syntax checks passed. No live browser run or manual website test
+was performed for this change. The app restarted with no active pilot; its
+collector-status API returned `ready`. Primary SQLite integrity remained `ok`
+at 27 logical rows before and after restart, with no changes made to those rows
+by this work.
+
+## Islamabad pilot result visibility — 2026-10-09
+
+Read-only inspection found three primary pilot jobs for "medical spas in
+Islamabad, Pakistan" with status `succeeded` and five captured listings each.
+Their retained manifests, source pages and CSV files exist. The latest manifest
+contains categories `Massage spa` and `Spa`; these are search results, not
+verified medical spas. The collector opens each listing in its owned Edge
+window and closes that window when done. The previous UI put its count and
+preview action in the activity list below the search form, making success easy
+to miss.
+
+The Discover page now shows the latest captured count beside the form and a
+direct preview button. A pilot started in the current page automatically opens
+its preview when polling sees it finish successfully; import remains a separate
+human action. Preview has a visible category column. This is a frontend change
+using existing job counts and preview API; no primary data was changed. The
+user asked not to open or manually test the website, so verification is limited
+to read-only source inspection and JavaScript syntax. A read-only SQLite check
+returned integrity `ok` with 20 logical rows after the user's runs; this change
+made no primary data writes. [Project explained](../PROJECT-EXPLAINED.md)
+is a 287-word overview of purpose, usage and limits.
+
+## Maps pilot failure messages — 2026-10-09
+
+The primary database shows three new failed live jobs for broad/location-only
+queries, plus an older failed New York job. Their saved error is generic; none
+has an importable result path. The three new jobs created only query files,
+without a CSV or source page. One server log shows the collector waiting for
+Maps listing links when its browser page closed, but the log cannot reliably
+identify the exact cause of each historical job. No primary lead was imported.
+
+The readiness panel now states that it checks Edge and collector setup only;
+it has not tested a Maps search. Recognized future failures have bounded,
+operator-facing messages for browser launch/closure, Maps navigation, unreadable
+result cards and unusable listings. Unknown failures retain a generic message;
+raw provider errors and proxy details are not stored in the job. Older generic
+rows now explain that their exact cause cannot be recovered. The existing
+pilot remains a real browser search, with no mock fallback or automatic import.
+
+No website was opened or clicked for this change. Targeted deployment/workspace
+tests passed 24 checks with simulated collector failures; Node syntax checks
+passed. The app was restarted without an active pilot; its collector-status API
+returned the new setup-only wording. Primary SQLite integrity remained `ok`
+with 17 logical rows before and after restart.
+
+## Windows Edge Maps alternative — 2026-10-09
+
+Windows now defaults to the installed Microsoft Edge browser and a pinned
+`playwright-core` package in ignored `.local/browser-tools`. Docker remains an
+optional runtime. The browser process receives network/runtime variables and
+`SystemRoot`; app tokens and provider credentials are excluded. TLS validation
+and managed proxy routing stay enabled. **Open Google Maps** opens the typed
+search in a separate tab for manual inspection; it does not save or scrape.
+**Start live pilot** performs the automated small-sample collection, retains
+the source pages and CSV, then requires the existing Preview → Import action.
+
+Live checks succeeded on this Windows laptop: one listing through the collector
+CLI and one listing from the app button. The app job completed, its UI preview
+showed one valid row, and the isolated app database still had zero businesses
+before import. The source HTML was retained, TLS was verified, and the CSV hash
+matched its manifest. No business was contacted. Manual Maps navigation passed
+the isolated browser fixture. The research UI suite now passes 17 checks; the
+Automation and Client suites have five and nine checks respectively. The full
+Python suite's previous 179-test result predates the final local-runtime test;
+22 targeted deployment/workspace tests passed after it. No full-site regression
+run was repeated for this small, scoped change.
+
+The live result was categorized as a tanning salon, exposing a relevance false
+positive for the med-spa query. It was not imported. CSV preview now retains the
+source category in provenance and displays it as a row warning; live-pilot
+imports also require an explicit checkbox confirming the categories were reviewed.
+The targeted CSV import suite passed 16 tests after this safeguard, and the
+workspace JavaScript and collector/Python modules passed syntax compilation.
+The category checkbox itself was not rerun in the browser, per the request to
+avoid another website test. Human category review remains necessary; this small
+sample does not establish discovery quality or broad Maps coverage.
+
+## Calm Studio discovery pass — 2026-10-09
+
+The local Windows source now shows an authenticated collector-readiness check
+before enabling **Start live pilot**. The check has bounded Docker calls and
+never pulls an image. Collection also checks prerequisites before contacting
+Maps or creating an output directory. Known prerequisite and network failures
+are saved as safe, actionable job messages; older generic failures cannot be
+reconstructed from their stored rows. The current laptop returned
+`docker_unavailable`; the pinned image is also absent, so no app collector run
+or live import was claimed.
+
+The workspace has a warm **Calm Studio** visual pass with compact navigation,
+clear Collect → Preview → Import steps, a visible collector status, and a
+responsive CSV path. It uses original CSS and the existing AIAutomation assets;
+no frontend dependency was added. The discovery page was inspected in visible
+Edge at 390, 1440 and 1900 px. Isolated visible Edge fixtures passed **30
+checks** (16 research, five Automation lab, nine clients/tasks/operations).
+An 18-screen desktop/phone sweep found zero JavaScript errors, broken images,
+document overflow or visible buttons below 32 px. All browser writes used
+separate fictional SQLite databases; no primary business was contacted.
+
+The final full Python suite passed **179 tests** after the collector preflight
+change; targeted deployment, CSV and workspace tests also passed 37 checks.
+The Docker image and live provider integrations remain unverified.
+
+## Windows provider checks and Tabler-inspired UI — 2026-10-09
+
+The current source passed **175 Python tests** after two Windows Docker-collector
+compatibility fixes. The updated UI passed **29 visible Edge fixture checks**:
+15 research/CRM, five Automation lab and nine client/task/operations. The
+client browser suite now uses the mobile Sections menu when testing phone
+navigation. An 18-screen desktop/phone sweep found zero JavaScript errors,
+broken images or document overflow. The only sub-32 px visible controls in
+the sweep were lead-name buttons; they were enlarged and retested at 38–41 px.
+
+The design uses [Tabler](https://github.com/tabler/tabler) as a visual reference
+for spacing, cards, tables and forms while retaining the app's existing CRM
+structure, branding and backend contracts. No frontend dependency was added.
+
+[Live integration checks](LIVE_INTEGRATION_CHECKS.md) record a real public
+website fetch, HTTPS reachability of Google Maps/OpenAI/Resend/Twilio, and two
+visible Maps searches. One medical-spa listing was inspected without import.
+Missing provider credentials keep AI/email/calls unverified. The pinned Docker
+collector image was absent. After C: free space rose from roughly 153 MB to
+3.2 GB, an exact-image pull was attempted; it made no visible layer progress
+and was interrupted when the daemon stopped responding promptly. No app
+collector run occurred. No business was contacted, and the primary
+database was not used for fixture writes.
+
+## Visible control audit and mobile navigation — 2026-10-09
+
+The current source passed **29 isolated visible Edge fixture checks**: 15
+research/CRM, five Automation lab and nine client/task/operations. The research
+suite now checks the lead-to-Tasks path and the mobile Sections menu. A separate
+visible Edge control audit passed **99 overlapping assertions** across the nine
+screens, nested client setup, lead details, downloads, keyboard navigation and
+mobile controls. Its [control matrix](UI_CONTROL_AUDIT.md) records each exercised
+control and guarded live action. An 18-screen desktop/phone sweep found no
+JavaScript errors, document overflow, broken images or narrow mobile buttons.
+
+The audit reproduced a lead dialog that remained open after its **Manage
+follow-up tasks** link changed the route. Hash navigation now closes the dialog;
+the exact click path passed in visible Edge. Mobile now has a Sections menu with
+all nine destinations, current-page feedback and keyboard/outside-click closing.
+The lead dialog also fills the phone viewport without horizontal shift.
+
+All fixture records were fictional and lived in separate SQLite databases. No
+real collection, external website fetch, AI request, email or call was triggered.
+Those credential/network paths remain separate from these UI checks. Browser
+logs, screenshots and scripts are retained under ignored
+`.local/control-audit-2026-10-09` and `.local/visible-ui-audit-2026-10-09`.
+
+## Visible Edge interaction and graphics pass — 2026-10-09
+
+The final UI was exercised in **visible** Edge windows against isolated fictional
+SQLite data. The research, Automation lab and client browser suites passed all
+**28 checks** after the graphics changes. A separate visible tour opened all nine
+sections. Additional visible checks covered pilot preview, raw/spreadsheet CSV
+downloads, saved-evidence download, manual task cancellation, a loading spinner
+during a delayed refresh, and reduced-motion behavior. An 18-screen desktop/phone
+visual sweep found no JavaScript errors, broken images, document overflow or
+undersized mobile buttons. Source JavaScript syntax also passed. Logs, screenshots
+and test-only browser scripts are under ignored `.local/visible-ui-audit-2026-10-09`.
+All business and customer data in these tests was fictional; no scrape, email or
+call occurred. The primary database was not used for the visible tests. Live
+provider actions and public hosting still require their separate verification.
+
+## Browser usability audit and UI polish — 2026-10-09
+
+After the restrained glow, readability and mobile navigation changes, **28
+isolated Edge fixture browser checks** passed again: 14 research/CRM, five
+Automation lab, and nine client/task/operations. JavaScript and CSP error lists
+are empty. A separate browser agent navigated all nine screens at 1440 px and
+390 px, found no broken images or document overflow, and passed eight additional
+safe controls with fictional records: client history, readiness, handoff download,
+lead dialog, saved views/search, global search, reminder step history and
+operations refresh. The agent confirmed the visible mobile swipe cues, inline
+consent checkboxes and 40 px Lock/refresh targets. Screenshots and reports are in
+ignored `.local/ui-audit-2026-10-09/visual`; the fixture suite logs are in the
+same audit folder. No real collection or provider action occurred, and the
+primary database was not used. The local preview on port 8000 remained running.
+
+## Local button and workflow audit — 2026-10-09
+
+The current source passed **29 isolated Edge browser checks**: 14 research/CRM,
+five Automation lab, nine client/task/operations, and one direct mobile check of
+pilot preview plus both CSV download buttons. The spreadsheet download prefixes
+the synthetic phone cell as text; the original raw CSV remains unchanged. The
+browser reports contain no JavaScript or CSP errors. Fictional fixtures ran in
+separate SQLite databases under ignored `.local/ui-audit-2026-10-09`; no real
+business was contacted and the primary research database was not used. The audit
+found no reproducible button defect, so no UI behavior was changed. Docker's Linux
+engine was unavailable; these are local Edge checks, not packaged-image or live
+provider verification. Reports and logs are retained in that ignored audit folder.
+The complete Python suite also passed **173 tests** on Python 3.13.
+
+## Windows recovery and security hardening — 2026-10-09
+
+The local Windows review reproduced one failing backup restore test in the prior
+170-test suite. Windows short/long path forms and manifest path separators caused
+the failure. Backup copies now canonicalize discovery paths, use portable manifest
+names, and restore older Windows manifest names. Six isolated backup tests pass,
+including recovery after the original scraper folder is removed.
+
+The bundled local collector subprocess now receives an allowlist of runtime and
+proxy variables instead of the API's full environment. A fixture test confirms
+that API/email credentials are absent while HTTPS proxy routing remains present.
+Successful pilot jobs now offer a separate spreadsheet-viewing CSV with common
+formula-leading cells prefixed as text; the original hashed CSV and import behavior
+are unchanged.
+The container entrypoint rejects APP_ENV=development before binding publicly.
+
+The complete Python suite passed **172 tests** on this Windows machine with
+Python 3.13. The entrypoint guard was added afterward and its isolated startup
+test passed; it brings the source suite to 173 tests, but the complete 173-test
+suite was not rerun. JavaScript syntax and Python compilation checks passed.
+Docker Desktop's Linux engine was unavailable, so no new packaged/browser or
+live provider checks were run. The running loopback preview returned healthy and
+ready, and the new route was registered. Read-only SQLite integrity was `ok`
+with 14 local records both before and after the preview restart. No real lead was
+collected or contacted during this verification.
+
+Residual deployment limits: Chromium still uses `--no-sandbox` in the shared app
+container, and the proxy resolves website hostnames after the API's public-IP
+validation. Public hosting needs isolated browser execution, private-destination
+blocking at egress, ingress rate limits, and individual accounts/roles for separate
+clients. The current source change does not establish those controls or a public
+deployment.
+
+## User logo update — 2026-10-08
+
+Transparent assets prepared from the user's coral/navy and navy A references
+replace the letter tile, favicon and shared-access card branding. This source
+update is published on the Windows preview branch; the previously packaged
+v0.10 image below predates this logo change and was not rebuilt for it.
+
+The existing public-shell/API-auth test passed. All six existing real-cohort
+browser checks passed against an isolated copy of the retained research database.
+Ad hoc browser inspection verified PNG loading, favicon responses, sidebar fit
+and absence of horizontal page overflow at widths 1600, 960 and 390; JavaScript
+errors were empty. The navy access-card logo was inspected with a simulated 401
+readiness response. No new provider action or primary-data mutation occurred.
+Reports/screenshots are retained under ignored `.local/logo-verification`.
+Windows instructions include a static-only update that preserves local leads.
+
 ## HubSpot-inspired CRM workspace — v0.10.0, 2026-10-08
 
 The workspace uses HubSpot as its layout reference: dark grouped navigation,

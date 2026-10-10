@@ -1,5 +1,9 @@
 # Backend handoff — v0.10.0
 
+The 2026-10-09 local hardening pass is described at the top of
+[VERIFICATION.md](VERIFICATION.md). Its source changes have not been packaged or
+checked with a live provider; the v0.10 release counts below are historical.
+
 The hackathon backend MVP is implemented and verified for a shared operator
 workspace with SQLite and one worker/replica. It supports the complete pilot flow:
 discover → analyze → rank → record contact → generate workflows → execute sandbox

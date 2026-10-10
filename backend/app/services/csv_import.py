@@ -133,6 +133,14 @@ def parse_csv(data, explicit):
             raw = dict(zip(headers, values))
             original = {field: raw[header] for field, header in mapping.items()}
             warnings = []
+            category_header = next((header for header in headers
+                                    if normalize_header(header) in {"category", "primarycategory", "businesscategory"}), None)
+            if category_header:
+                source_category = optional(raw[category_header])
+                if source_category:
+                    source_category = " ".join(source_category.split())[:120]
+                    original[category_header] = source_category
+                    warnings.append(f"Source category: {source_category}")
             try:
                 if any(len(value) > 8192 for value in original.values()):
                     raise ValueError("Mapped values exceed the supported length")

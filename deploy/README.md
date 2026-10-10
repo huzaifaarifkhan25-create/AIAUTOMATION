@@ -84,6 +84,9 @@ Store the token privately; the app checks length/character restrictions, not its
 randomness. A cryptographically generated token, such as `secrets.token_urlsafe(48)`,
 is appropriate. Rotate it in hosting settings and restart the app if shared access
 changes. This is one shared workspace, with no individual accounts or roles.
+Set ingress rate limits for failed authentication, collection and website analysis
+before exposing the pilot publicly. The application does not implement per-user
+quotas or roles.
 
 Route public requests through HTTPS. The container listens on its assigned port
 over internal HTTP. Preserve the app hostname in the ingress Host header; include
@@ -100,6 +103,15 @@ settings; do not copy cloud proxy credentials. For an approved intercepting prox
 install its public CA through supported host configuration for both Python and
 Chromium. Never disable TLS verification. A deployment-host live test is required
 before claiming its scraper or website fetching works.
+
+The local browser subprocess now receives only runtime and proxy variables, not
+API or provider credentials. Chromium still runs without its own sandbox in the
+API container and shares that container's filesystem access. Isolate the browser
+in a separate low-privilege worker before using collection with untrusted browsing
+at larger scale. The website fetcher validates allowed public DNS answers, but a
+proxy resolves the hostname again for the connection. Configure the hosting
+egress/proxy policy to reject private and local destinations; the application
+cannot prove the proxy's final destination from inside this container.
 
 Website research needs exact `WEBSITE_ALLOWED_HOSTS`, separate from app allowed
 hosts. HTTPS DNS fallback and redirects remain opt-in. Optional AI, Places,

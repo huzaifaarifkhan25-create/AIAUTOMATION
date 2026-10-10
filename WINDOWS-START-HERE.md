@@ -3,6 +3,11 @@
 These steps run the actual CRM and backend on your laptop. You need Windows,
 Python 3.12 and an internet connection for the first dependency installation.
 Opening the CRM requires no Node.js, Docker or paid provider account.
+For optional live Maps collection on Windows, run
+**SETUP-WINDOWS-COLLECTOR.bat** once after installing Node.js. It uses the
+installed Microsoft Edge browser and does not need Docker. Restart the app
+after setup. The first collector run still needs Google Maps network access;
+always preview category and source evidence before importing.
 
 1. Download the project ZIP from this GitHub branch: use **Code → Download ZIP**.
 2. Right-click the downloaded ZIP, select **Extract All**, and open the extracted
@@ -43,6 +48,33 @@ The other controls for clients, tasks and monitoring are described in
 [the workspace walkthrough](backend/WORKSPACE.md). Real data can be imported
 through **Discover & import** with CSV preview before saving.
 
+## Update an existing laptop installation
+
+For the logo update, keep your existing project folder and its saved data:
+
+1. Stop the app with **Ctrl+C** in its launcher window.
+2. Download and extract the latest ZIP from the same GitHub branch into a
+   separate folder.
+3. In that new folder, open `backend/app` and copy its **static** folder.
+4. Open `backend/app` in your existing project folder and paste it there. Choose
+   **Replace the files in the destination** if Windows asks.
+5. Double-click **START-WINDOWS.bat** in your existing project folder again.
+6. In the browser, press **Ctrl+F5** to load the new logo and styles.
+
+Your imported leads are saved separately in `.local/backend.sqlite3`. Keep that
+folder. The logo update only needs the `backend/app/static` files.
+
+## Update backend code while keeping your records
+
+The static-only steps above apply to the logo change. For backend or security
+updates, stop the running app first, extract the new project ZIP into a separate
+folder, and copy the entire `.local` folder from your old project into the new
+project. Keep the old folder as a recovery copy. Start the new project's
+`START-WINDOWS.bat`; it will create its own `.venv` and use your copied SQLite
+database and scraper artifacts. Do not replace `.local` with an empty folder from
+a download. Re-enter any private environment settings separately; they are not
+included in source ZIPs.
+
 ## Troubleshooting
 
 - **Python is missing:** finish the Python 3.12 installation with the launcher
@@ -53,9 +85,24 @@ through **Discover & import** with CSV preview before saving.
   open. If another copy is using port 8000, close it before starting this one.
 - **Demo disappeared:** enable the fictional-data filter; your saved records are
   still in `.local/backend.sqlite3`.
-- **Real collection is unavailable:** Maps collection requires the separate
-  Docker/browser setup in [SCRAPING.md](backend/SCRAPING.md). CSV imports and the
-  CRM do not need Docker.
+- **Real collection is unavailable:** Run the optional
+  **SETUP-WINDOWS-COLLECTOR.bat** with Node.js and Edge installed, restart the
+  app, and click **Check again** in Discover & import. Windows now defaults to
+  this local Edge runtime; `BROWSER_RUNTIME=docker` remains an explicit option.
+  **Browser setup ready** means Edge and collector files were found. It does
+  not mean a Maps search succeeded. Enter a city; the app will search for
+  medical spas there. You may also enter a full business-and-location query.
+  Start a pilot and inspect its preview before importing. A failed job saves no lead;
+  old generic errors cannot show their exact cause.
+  **Open Google Maps** also works for manual review without the collector. CSV
+  imports and the CRM need neither Node nor Docker. A one-listing Edge collector
+  run succeeded on the checked Windows laptop without importing it; each new
+  location still needs a live check and human review.
+
+The [live integration check](backend/LIVE_INTEGRATION_CHECKS.md) lists the exact
+AI, email and calling prerequisites. Configure credentials only in private
+runtime settings, then use consenting test destinations and an isolated database
+for real provider checks. Never paste secrets into a chat or source file.
 
 Calls and email are disabled by default. This local walkthrough exercises the
 sandbox; live providers, public hosting, native n8n and individual user accounts

@@ -163,7 +163,8 @@ const { chromium, request: requestAPI } = require('/opt/ms-playwright-go/package
     await page.screenshot({path:out+'/clients-desktop.png',fullPage:true});
     await page.setViewportSize({width:390,height:844});
     for(const label of ['Clients','Follow-up tasks','Operations']) {
-      await page.getByRole('link',{name:label,exact:true}).click();
+      await page.locator('#mobile-sections summary').click();
+      await page.locator('#mobile-section-list').getByRole('link',{name:label,exact:true}).click();
       const titles={'Clients':'Clients','Follow-up tasks':'Follow-up tasks','Operations':'Operations'};
       await page.getByRole('heading',{name:titles[label],exact:true}).waitFor();
       assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),label);
@@ -171,7 +172,8 @@ const { chromium, request: requestAPI } = require('/opt/ms-playwright-go/package
     await page.screenshot({path:out+'/operations-mobile.png',fullPage:true});
     assert.deepEqual(errors,[]);assert.deepEqual(csp,[]);
     checked('Client, task and operations views fit mobile/desktop with no JavaScript or CSP errors');
-    await page.getByRole('link',{name:'Clients',exact:true}).click();
+    await page.locator('#mobile-sections summary').click();
+    await page.locator('#mobile-section-list').getByRole('link',{name:'Clients',exact:true}).click();
     let release;const gate=new Promise(resolve=>release=resolve);
     await page.route('**/clients/'+client.id+'/history?limit=100',async route=>{await gate;await route.continue();});
     const delayedResponse=page.waitForResponse(r=>r.url().endsWith('/clients/'+client.id+'/history?limit=100'));

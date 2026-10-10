@@ -1,11 +1,15 @@
 # Med Spa Automation Platform
 
+An additive [Next.js pilot workspace](frontend/README.md) now provides a purple dashboard, CSV discovery/import, lead research, Gemini draft panels, read-only AI chat, workflow graphs and sandbox reminder controls. The original `/app/` CRM remains available. Google Stitch is configured as optional Codex design tooling; see [Stitch setup](docs/STITCH-SETUP.md). Neither provider has been verified live in this change.
+
 Browser workspace and backend MVP for finding med spas, assessing automation opportunities, preparing
 outreach, generating workflow definitions, running reminders and preparing client
 handoff. It includes contact history/tasks, reviewed client workflow activation,
 operations monitoring and local persistence, with adapters for Google Places,
 OpenAI, Supabase, Resend email and human Twilio calling.
 Live provider access requires configuration and separate verification.
+For a short explanation of the purpose, usage and limits, read
+[PROJECT-EXPLAINED.md](PROJECT-EXPLAINED.md).
 
 See [the shared-workspace MVP contracts and demo](backend/MVP.md) and
 [the backend status audit](backend/STATUS.md) for what works, the problems
@@ -23,9 +27,10 @@ This screenshot shows the verified cloud workspace with five real leads whose
 internal needs remain unconfirmed. A new laptop starts with an empty database;
 follow [the Windows guide](WINDOWS-START-HERE.md) to create a labeled demo.
 
-Free discovery uses a local browser pilot and CSV imports. The pilot uses the
-verified browser bundled in the pinned gosom Docker image, with our own collector
-to support the cloud proxy and certificate trust. Five live New York medical-spa
+Free discovery uses a local browser pilot and CSV imports. On Windows, the pilot
+uses installed Edge and pinned Playwright Core; the portable container keeps its
+pinned browser. The collector retains source pages and requires preview before
+import. Five live New York medical-spa
 listings have been collected and imported. See [backend/SCRAPING.md](backend/SCRAPING.md) for setup,
 browser-extension alternatives, upload instructions, and live collection status.
 All five official pilot websites now pass automatic website fetching and analysis
@@ -96,8 +101,9 @@ Tests cover health, documentation, mock search, input validation, and OpenAPI co
 They also exercise persistence across app restarts, evidence scoring, ranking,
 workflow generation, authentication, website restrictions, provider contracts,
 and call idempotency. Provider tests use simulated responses, never real calls.
-The current suite contains 170 tests. Browser verification is documented in
-[backend/VERIFICATION.md](backend/VERIFICATION.md); fixtures and live checks are separate.
+The v0.10 release suite contained 170 tests. The latest Windows hardening pass
+ran 172 tests together and one additional entrypoint test separately; see
+[backend/VERIFICATION.md](backend/VERIFICATION.md). Fixtures and live checks are separate.
 
 ## Browser workspace
 

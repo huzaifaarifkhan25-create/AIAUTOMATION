@@ -1,5 +1,44 @@
 # Backend status — 2026-10-08 (v0.10.0)
 
+**Current local UI update (2026-10-09):** Discover & import uses the Calm Studio
+med-spa theme, an authenticated readiness check and a Docker-free Windows Edge
+collector. A live one-listing app job completed and displayed its preview in an
+isolated database; its result was a tanning salon and was not imported. Preview
+now shows source categories and requires an explicit category-review confirmation
+before live-pilot import. The separate **Open Google Maps** link is for manual
+inspection and does not save data. Windows collector
+setup is documented in [WINDOWS-START-HERE.md](../WINDOWS-START-HERE.md).
+The collector readiness panel now explains that setup readiness does not prove
+Maps access; recognized future failures show safe, specific guidance. Three new
+primary failed jobs and the historical generic New York job have no recoverable
+per-job root-cause detail or importable CSV. No lead was imported from them.
+Three subsequent Islamabad pilots succeeded with five listings each. Their
+Spa/Massage spa categories require relevance review; the latest count and
+preview action are now beside the search form, and a newly completed pilot
+opens its preview automatically in the active Discover page. Import remains
+explicit. The user requested no manual browser retest for this UI update.
+Two later location-only queries failed without a CSV. The browser form now
+turns a city-only entry into an explicit med-spa search, and future Maps
+place/city redirects have a specific safe error. This new query behavior has
+targeted simulated checks, not a live browser verification.
+See [VERIFICATION.md](VERIFICATION.md) for exact checks. AI, email and calls
+still require separate live credential checks; no real contact occurred.
+
+The earlier 2026-10-09 Windows/UI pass is documented in
+[VERIFICATION.md](VERIFICATION.md), [CRM_DESIGN.md](CRM_DESIGN.md) and
+[LIVE_INTEGRATION_CHECKS.md](LIVE_INTEGRATION_CHECKS.md). That pass ran
+175 Python tests and 29 isolated visible Edge fixture checks. It introduced
+Tabler-inspired spacing/controls and phone Sections navigation. Windows
+Docker-collector host compatibility was corrected, but the pinned image was
+absent. A later pinned-image pull stalled without visible layer progress; no
+app collector run was claimed. Provider credentials remain absent, with no
+live email or call.
+
+Local Windows hardening on 2026-10-09 repaired backup restore, limited browser
+subprocess environment exposure, added a spreadsheet-viewing CSV and a production
+entrypoint guard. See the newest [verification section](VERIFICATION.md). The
+v0.10 packaged checks below remain historical; no new Docker build was verified.
+
 The supported shared-workspace backend MVP is implemented across discovery,
 analysis, ranking, contact records, workflow generation, local execution and client
 handoff. Version 0.8 connects the client, manual task and operations screens to
@@ -15,7 +54,7 @@ and [MVP.md](MVP.md) for exact contracts and the complete fictional client demo.
 
 | Stage | Working now | Remaining work |
 |---|---|---|
-| Discover | Real Maps collection, retained sources, CSV preview/import, duplicate checks | Only 1–10 visible listings per pilot; no pagination, coverage guarantee, or distributed queue |
+| Discover | Windows Edge or bundled browser collection, retained sources, CSV preview/import, duplicate checks | Only 1–10 visible listings per pilot; no pagination, coverage guarantee, or distributed queue |
 | Analyze | Public HTML fetching, dated evidence, unknowns, deterministic scoring, immutable snapshots | No JavaScript booking/form testing; operator assertions need review; optional AI provider access remains unverified |
 | Rank | Latest-evidence prospect and need stages; demos and opt-outs excluded by default | Initial thresholds need calibration against sales outcomes |
 | Contact | Outreach drafts, atomic contact history, manual activity/tasks, guarded human dialer, signed agent-leg outcomes and read-only reconciliation | No automatic prospect email/SMS, AI calling, or live dialer validation; calls disabled |

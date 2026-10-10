@@ -1,6 +1,8 @@
 """Single-worker pilot jobs. Never automatically import or retry a collection."""
 import asyncio
+import csv
 import hashlib
+import io
 import json
 from datetime import datetime
 from pathlib import Path
@@ -9,7 +11,22 @@ from uuid import uuid4
 from app.errors import AppError
 from app.models.workflow import now
 from app.services.csv_import import import_csv
-from collect_leads import collect
+from collect_leads import CollectorUnavailable, collect
+
+
+def spreadsheet_csv(data):
+    """Make a human-viewing copy; keep the original CSV for imports and evidence."""
+    output = io.StringIO(newline="")
+    writer = csv.writer(output, quoting=csv.QUOTE_ALL, lineterminator="\n")
+    for row in csv.reader(io.StringIO(data.decode("utf-8-sig"), newline=""), strict=True):
+        safe = []
+        for value in row:
+            value = value.replace("\t", " ").replace("\r", " ").replace("\n", " ")
+            if value.lstrip().startswith(("=", "+", "-", "@", "＝", "＋", "－", "＠")):
+                value = "\t" + value
+            safe.append(value)
+        writer.writerow(safe)
+    return ("\ufeff" + output.getvalue()).encode("utf-8")
 
 
 class Discovery:
@@ -83,6 +100,8 @@ class Discovery:
             if preview.total_rows != job["collected_count"] or not (preview.valid_rows or preview.duplicate_rows):
                 raise ValueError("Invalid collection counts")
             job["status"] = "succeeded"
+        except CollectorUnavailable as error:
+            job.update(status="failed", error=str(error))
         except Exception:
             # Provider/process exception messages may contain credential values.
             job.update(status="failed", error="Live collection failed or produced invalid output. Check the collector prerequisites and network access, then start a new pilot. No leads were imported.")

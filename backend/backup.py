@@ -5,7 +5,7 @@ import json
 import shutil
 import sqlite3
 from contextlib import closing
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from uuid import uuid4
 
 
@@ -18,14 +18,25 @@ def database(path):
     return sqlite3.connect(path.resolve().as_uri() + "?mode=ro", uri=True)
 
 
+def manifest_path(name):
+    # Older Windows backups used backslashes; new manifests use portable names.
+    if not isinstance(name, str) or not name or "\x00" in name:
+        raise ValueError("Backup file name is invalid")
+    relative = PurePosixPath(name.replace("\\", "/"))
+    if (relative.is_absolute() or not relative.parts or ".." in relative.parts
+            or ":" in relative.parts[0]):
+        raise ValueError("Backup file name is outside the backup")
+    return Path(*relative.parts)
+
+
 def verify(folder):
     manifest = json.loads((folder / "manifest.json").read_text())
     if manifest.get("format") != "aiautomation-backup-v1":
         raise ValueError("Unsupported backup format")
     for name, digest in manifest["files"].items():
-        relative = Path(name)
+        relative = manifest_path(name)
         path = folder / relative
-        if relative.is_absolute() or ".." in relative.parts or path.is_symlink() or not path.resolve().is_relative_to(folder.resolve()) or checksum(path) != digest:
+        if path.is_symlink() or not path.resolve().is_relative_to(folder.resolve()) or checksum(path) != digest:
             raise ValueError("Backup file is missing, changed, or outside the backup")
     if "backend.sqlite3" not in manifest["files"]:
         raise ValueError("Backup database is missing")
@@ -54,6 +65,13 @@ def backup(db_path, scrape_root, output_root):
                     path = Path(job["result_path"]).resolve()
                     if not path.is_relative_to(scrape_root) or checksum(path) != job["sha256"]:
                         raise ValueError("A successful job's original CSV is missing or changed")
+                    # Store a canonical path in the backup copy. Windows may have
+                    # saved the original path with an 8.3 parent directory name.
+                    if job["result_path"] != str(path):
+                        job["result_path"] = str(path)
+                        target.execute("UPDATE backend_records SET payload=? WHERE kind='discovery_jobs' AND id=?",
+                                       (json.dumps(job), job["id"]))
+            target.commit()
         if scrape_root.exists():
             for path in scrape_root.rglob("*"):
                 if path.is_symlink():
@@ -62,7 +80,7 @@ def backup(db_path, scrape_root, output_root):
                     destination = folder / "scrapes" / path.relative_to(scrape_root)
                     destination.parent.mkdir(parents=True, exist_ok=True)
                     shutil.copyfile(path, destination)
-        files = {str(path.relative_to(folder)): checksum(path) for path in folder.rglob("*") if path.is_file()}
+        files = {path.relative_to(folder).as_posix(): checksum(path) for path in folder.rglob("*") if path.is_file()}
         (folder / "manifest.json").write_text(json.dumps({"format": "aiautomation-backup-v1", "source_scrape_root": str(scrape_root), "files": files}, indent=2) + "\n")
         verify(folder)
         return folder
@@ -78,18 +96,19 @@ def restore(folder, destination):
         shutil.copyfile(folder / "backend.sqlite3", destination / "backend.sqlite3")
         (destination / "scrapes").mkdir()
         for name in manifest["files"]:
-            if name.startswith("scrapes/"):
-                path = destination / name
+            relative = manifest_path(name)
+            if relative.parts[0] == "scrapes":
+                path = destination / relative
                 path.parent.mkdir(parents=True, exist_ok=True)
-                shutil.copyfile(folder / name, path)
-        original = Path(manifest["source_scrape_root"])
+                shutil.copyfile(folder / relative, path)
+        original = Path(manifest["source_scrape_root"]).resolve()
         if not original.is_absolute():
             raise ValueError("Original artifact root must be absolute")
         with closing(sqlite3.connect(destination / "backend.sqlite3")) as connection, connection:
             for record_id, payload in connection.execute("SELECT id,payload FROM backend_records WHERE kind='discovery_jobs'").fetchall():
                 job = json.loads(payload)
                 if "result_path" in job:
-                    old = Path(job["result_path"])
+                    old = Path(job["result_path"]).resolve()
                     if not old.is_relative_to(original):
                         raise ValueError("Discovery result lies outside the original artifact root")
                     job["result_path"] = str((destination / "scrapes" / old.relative_to(original)).resolve())

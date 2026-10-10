@@ -66,6 +66,16 @@ class CsvImportTests(unittest.IsolatedAsyncioTestCase):
         async with httpx.AsyncClient(transport=httpx.ASGITransport(app=create_app(self.settings)), base_url="http://testserver") as client:
             self.assertEqual((await client.get(f"/businesses/{record_id}")).json()["provenance"], provenance)
 
+    async def test_source_category_is_shown_and_retained_for_human_review(self):
+        data = "name,address,category,place_id\nSynthetic Aesthetics,Fixture Address,Tanning salon,fixture-place-id\n"
+        preview = (await self.upload(data)).json()
+        self.assertEqual(preview["rows"][0]["warnings"], ["Source category: Tanning salon"])
+        self.assertEqual((await self.client.get("/businesses")).json(), [])
+        imported = (await self.upload(data, dry_run="false")).json()
+        record_id = imported["rows"][0]["business_id"]
+        record = (await self.client.get(f"/businesses/{record_id}")).json()
+        self.assertEqual(record["provenance"]["original_values"]["category"], "Tanning salon")
+
     async def test_stable_place_id_deduplicates_changed_name_address(self):
         first = await self.upload(dry_run="false")
         changed = GOSOM.replace("Demo Med Spa", "Renamed Demo Spa").replace("10 Example Street, Demo City", "Changed Address")
@@ -186,7 +196,9 @@ class ScraperNetworkTests(unittest.TestCase):
     def test_blocked_managed_network_prevents_container_start(self):
         from collect_leads import collect
         with tempfile.TemporaryDirectory() as temp:
-            with patch("collect_leads.httpx.Client", side_effect=httpx.ConnectError("blocked")), patch("collect_leads.subprocess.run") as run:
+            with patch("collect_leads.collector_status", return_value={"ready": True}), \
+                 patch("collect_leads.httpx.Client", side_effect=httpx.ConnectError("blocked")), \
+                 patch("collect_leads.subprocess.run") as run:
                 with self.assertRaisesRegex(RuntimeError, "no scraper job was started"):
                     collect("med spas in Demo City", Path(temp))
                 run.assert_not_called()

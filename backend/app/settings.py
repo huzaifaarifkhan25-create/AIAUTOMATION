@@ -17,6 +17,8 @@ class Settings:
     google_places_api_key: str = field(default="", repr=False)
     llm_api_key: str = field(default="", repr=False)
     llm_model: str = "gpt-4.1-mini"
+    gemini_api_key: str = field(default="", repr=False)
+    gemini_model: str = "gemini-3.5-flash"
     supabase_url: str = ""
     supabase_key: str = field(default="", repr=False)
     website_allowed_hosts: tuple[str, ...] = ()
@@ -31,7 +33,7 @@ class Settings:
     resend_api_key: str = field(default="", repr=False)
     resend_from_email: str = ""
     resend_webhook_secret: str = field(default="", repr=False)
-    browser_runtime: str = "docker"
+    browser_runtime: str = "local" if os.name == "nt" else "docker"
     scrape_output_path: str = str(Path(__file__).resolve().parents[2] / ".local/scrapes")
 
     def validate_runtime(self):
@@ -74,6 +76,8 @@ class Settings:
             google_places_api_key=os.getenv("GOOGLE_PLACES_API_KEY", ""),
             llm_api_key=os.getenv("LLM_API_KEY", ""),
             llm_model=os.getenv("LLM_MODEL", defaults.llm_model),
+            gemini_api_key=os.getenv("GEMINI_API_KEY", ""),
+            gemini_model=os.getenv("GEMINI_MODEL", defaults.gemini_model),
             supabase_url=os.getenv("SUPABASE_URL", "").rstrip("/"),
             supabase_key=os.getenv("SUPABASE_KEY", ""),
             website_allowed_hosts=tuple(
@@ -91,6 +95,6 @@ class Settings:
             resend_api_key=os.getenv("RESEND_API_KEY", ""),
             resend_from_email=os.getenv("RESEND_FROM_EMAIL", ""),
             resend_webhook_secret=os.getenv("RESEND_WEBHOOK_SECRET", ""),
-            browser_runtime=os.getenv("BROWSER_RUNTIME", "docker"),
+            browser_runtime=os.getenv("BROWSER_RUNTIME", defaults.browser_runtime),
             scrape_output_path=os.getenv("SCRAPE_OUTPUT_DIR", defaults.scrape_output_path),
         )
