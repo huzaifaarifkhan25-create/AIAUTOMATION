@@ -17,6 +17,7 @@ $venvPython = Join-Path $PSScriptRoot '.venv/Scripts/python.exe'
 $pythonPath = if (Test-Path -LiteralPath $venvPython) { $venvPython } else { 'python' }
 try {
     $env:GEMINI_API_KEY = ConvertFrom-SecureString -SecureString $privateKey -AsPlainText
+    if (-not $env:APP_API_TOKEN) { $env:APP_API_TOKEN = 'local-dev-token-secret-12345' }
     Remove-Variable privateKey
     Write-Host 'Starting the local backend with Gemini enabled. Keep this terminal open; press Ctrl+C to stop.'
     & $pythonPath -m uvicorn app.main:app --app-dir backend --host 127.0.0.1 --port 8000 --workers 1
