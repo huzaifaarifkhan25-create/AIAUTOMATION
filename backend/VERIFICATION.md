@@ -1,4 +1,75 @@
-# Workspace milestone verification
+# Current verification — v0.14.0
+
+## Integrated seven-area build — 2026-10-15
+
+This section supersedes older scope/counts below. Source integrates the current
+purple Next.js UI with restored individual shared-workspace accounts, 34-tool
+reviewed Agent and fixed native n8n execution, plus authenticated real inquiry
+intake, measured outcomes and deployment/backup configuration. Existing research,
+CSV, multilingual outreach and sandbox/client features are retained.
+
+| Check | Result | Exact scope |
+|---|---|---|
+| Full Python discovery from `backend/` | **309 discovered; 307 passed; two skipped** | `../.venv/bin/python -m unittest discover -s tests -v`; final run after native pause fix. Skips are Windows Docker-host-only checks. `.local/complete-build/final-python-suite.log`. |
+| Current feature modules | Included in full suite | Agent 46, accounts 15, native n8n 22, inquiries 19, outcomes 7, backup 7, delivery 15, existing AI 8 and Level-1 outreach 9, plus remaining baseline modules. Provider responses in unit tests are simulated. |
+| Frontend unit/type/build | **4 passed; typecheck/build exit 0** | Node test runner, TypeScript and current Next.js standalone output. Final logs `.local/complete-automation/frontend-browser/{unit,typecheck,build}-final.log`. |
+| Final browser acceptance | **12 passed; no JS errors** | Chromium desktop/mobile against isolated actual HTTP API and final standalone frontend: registration/reload, mapped CSV preview/import, task actions, retained outreach, missing-AI truth, actual n8n deploy/manual run, source key, token intake/deduplication, measured demo filtering, mobile views, source/remote pause and revoked logout. `.local/complete-automation/frontend-browser/report.json`. |
+| Account identity bridge | **19 checks passed** | Real HTTP cookie/CSRF forwarding without owner-bearer substitution; cross-origin rejection, reload, logout, revoked no-fallback and separate legacy preview behavior. `.local/auth-bridge-kufFGW/report.json`. |
+| Final standalone production HTTP | **10 checks passed** | Latest Next.js output + isolated production FastAPI: login/logo/static, anonymous block, shared-account registration, Secure HttpOnly cookie, saved reads, cross-origin rejection, logout/revocation. `.local/deployment-new/standalone-report.json`. No public TLS. |
+| Compose configurations | **4 profiles passed** | Default, n8n, maintenance and combined rendered/checked. No provider keys in frontend; no backend/n8n host ports; private persistent storage. `.local/deployment-new/configuration-report.json`. |
+| Docker context exports | **Both passed** | Actual network-disabled `FROM scratch` copies of root/frontend contexts; all required COPY files present, synthetic `.env`, local data/dependencies excluded. Backend 137 files/frontend 37 files. `.local/deployment-new/build-context-report.json`. Not full app-image builds. |
+| Env-file/local defaults | **Passed** | Actual Linux uvicorn private env-file startup; copied root `.env.example` validates without creating a DB. `.local/deployment-new/envfile-report.json`, `env-example-report.json`. Windows batches source-reviewed only. |
+| Backup runtime | **Passed with precise scope** | Seven current-source restore regressions include account retention and restored-session revocation. Separate older verified image exercised read-only volume/WAL backup; that image does not establish a v0.14 container run. `.local/deployment-new/readonly-backup-report.json`. |
+| Primary data | **Integrity ok; unchanged** | Read-only before/after hash of sorted `(kind,id,payload)` compact JSON unchanged for 25 logical records; account/session/rate-limit tables empty. Hash `22872dc36da1316353b74475ce8fec44c1c5d747a448ae442acb1868a907a92f`. |
+
+### Actual local n8n proof
+
+Official **n8n 2.42.6**, installed through npm with Node 24, executed the fixed
+native graph. The app read matching successful saved execution **10** and created
+one fictional task; an identical repeat reused it. Remote pause was confirmed.
+Report: `.local/complete-automation/n8n/live-proof.json`.
+
+A separate authenticated intake route used real local n8n execution **12** and
+created one fictional task. Wrong key returned 401, identical event reused the
+task, changed event conflicted, source pause blocked further intake and default
+metrics excluded demos. Intake route was exercised via ASGI; the later browser
+pass also exercised real HTTP ingestion. Report:
+`.local/complete-automation/n8n/intake-live-proof.json`. Email mode was `none`.
+The live key deliberately lacked workflow-update permission; rejection of edited
+graphs is covered by simulated-provider tests, not a live workflow-edit test.
+
+Final review fixed a native task retry after pause: even a previously verified
+execution must pass an active-deployment check under the final execution lock.
+The new regression proves it cannot create a task or replay the webhook after
+pause. Other concurrency coverage includes source pause during network waits,
+key rotation during body streaming, recipient opt-out and changed sender.
+Email metrics now separate provider terminal failures from skipped/cancelled
+work that stopped safely before submission.
+
+### Checks not performed
+
+- No fresh live Gemini connection or tool roundtrip: no valid credential injected.
+  Agent/draft provider unit tests are simulated. Historical provider evidence is
+  not a current credential verification and the exposed old key was not reused.
+- No live Resend submission or customer contact; delivery remains unverified.
+- No new live Maps search or category review of new leads in this build.
+- No complete new backend/frontend Docker application-image build/stack startup.
+  Cloud VFS disk limits were respected; scratch-context checks are narrower.
+- No public deployment, DNS/TLS issuance, public webhook check or off-host restore.
+- No physical Windows launcher execution, hosted n8n check or n8n-volume restore.
+
+All fixtures were isolated from primary SQLite and used fictional customer data;
+email was disabled in browser/native tests. All test remote workflows were paused.
+Private local report paths are retained only in this environment and are excluded
+from source releases. Do not represent implementation, mocked tests or local
+engine proof as evidence of public hosting or verified live customer delivery.
+
+## Historical verification
+
+The dated entries below document earlier builds, machines and datasets. Their
+feature limitations, session behavior and counts do not override the current
+section. In particular, accounts now survive reload and native n8n is supported
+within its fixed graph; the old `/app/` remains a shared-token fallback.
 
 ## Caller/email Level 0 and Level 1 — 2026-10-09
 

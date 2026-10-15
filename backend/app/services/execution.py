@@ -29,6 +29,7 @@ class Execution:
         self.task = None
         self.appointments = None
         self.clients = None
+        self.inquiries = None
 
     def require_supported(self):
         if not self.supported:
@@ -175,6 +176,8 @@ class Execution:
                 try:
                     # Guards are checked even during waits and immediately before actions.
                     await self.check_current(Workflow.model_validate(run["workflow_snapshot"]))
+                    if self.inquiries:
+                        await self.inquiries.check_email_run(run)
                     if run.get("deployment_id"):
                         if not self.clients:
                             raise AppError(503, "client_service_unavailable", "Client workflow service is unavailable")

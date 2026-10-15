@@ -1,0 +1,10 @@
+.auth-card{width:min(100%,480px)}
+.auth-card input:not([type=checkbox]){display:block;width:100%}
+.auth-tabs{display:flex;gap:7px;margin:20px 0;flex-wrap:wrap}
+.auth-tabs .secondary{background:#2a214b;color:#ddd3ef;border-color:#5b4b7f;flex:1;white-space:nowrap}
+.auth-tabs .secondary[aria-pressed=true]{background:#7049c6;border-color:#b38ae9;color:#fff}
+.auth-card .auth-confirm{font-weight:400;font-size:12px;line-height:1.5;display:flex;gap:9px;align-items:flex-start}
+.auth-confirm input{flex:none;margin-top:3px}
+.auth-card .error{color:#ffadb9}
+.auth-card .hint{color:#c7bcdd}
+@media(max-width:430px){.auth-card{padding:25px}.auth-tabs .secondary{font-size:11px;padding:9px}}

@@ -1,5 +1,55 @@
 # Med Spa Automation Platform
 
+## Integrated v0.14 verification — 2026-10-15
+
+Current source is on `codex/complete-automation`, based on GitHub preview b43b2f2.
+Main and `codex/windows-crm-preview` are preserved; v0.13 local recovery remains
+on `codex/recovery-v013-8ee4d1d`. Use the current completion report and top of
+backend/VERIFICATION.md rather than historical absent-feature descriptions below.
+
+Seven agreed areas are implemented within the fixed single-workspace scope.
+Final Python: 309 discovered, 307 passed, two Windows-only skips. Frontend four
+unit tests, typecheck/build, 12 browser checks, 19 account-bridge HTTP checks and
+10 current standalone production HTTP checks passed. Actual local official n8n
+2.42.6 execution and intake each created one deduplicated fictional task. No
+fresh live Gemini, Resend email, public hosting, physical Windows launcher or
+full new application Docker stack was verified. No real customer contact.
+
+Account sessions now survive reload; only optional legacy preview sessions lock
+on reload. The new purple interface supports accounts; old /app/ stays shared-token
+based. Local Gemini setup also enables existing AI drafts in server memory.
+Native graph remains Webhook → Set → Respond, with separate app Resend delivery.
+Business-confirmed need is required; a paused deployment cannot commit even a
+previously verified task. Source pause/rotation and recipient/sender final guards
+remain. Provider failures and safely stopped email actions are separate metrics.
+
+Primary data is unchanged: 25 logical rows, integrity ok, no primary accounts.
+Never commit .env, data, retained sources, installed modules or private reports.
+For Windows use START-APP-WINDOWS.bat and the new safe .env.example; preserve .local
+and private settings on upgrades. Public hosting and live credentials remain
+external requirements, not claims established by local proof.
+
+## Current authorized build — 2026-10-14
+
+The user explicitly authorized completing seven functional areas: restore
+individual shared-workspace accounts; native n8n deployment/execution; the
+grounded reviewed AI Agent; authenticated real inquiry intake; actual guarded
+email delivery; outcome tracking; and deployable persistent operation/backups.
+This supersedes the older Level-1-only and no-native-n8n scope below. Dialers,
+arbitrary workflow editors, calendars, billing and private company tenants are
+still outside this agreed build. Keep the current purple Next.js interface and
+the older /app/ fallback. Preserve data and newer outreach features when restoring
+code from the earlier v0.13 recovery commit. The current baseline is b43b2f2.
+
+Use isolated fictional test data. Never contact actual prospects/customers in
+tests. No live email until credentials, verified sender and an explicitly owned
+test recipient are supplied. Keys belong in private runtime settings, not chat,
+Git or logs. Distinguish implemented behavior, simulated-provider coverage and
+live proof. Preserve main; work on codex/complete-automation. Avoid worktrees.
+
+Root owns main.py, settings.py and database/store.py integration. Collaborating
+agents own separate feature files and coordinate shared contracts before editing.
+
 ## Current caller/email work — Level 0 and Level 1, 2026-10-09
 
 Read `CALLER-EMAIL-INSTRUCTIONS.md` and `backend/LEVEL1-OUTREACH.md` before further outreach changes. The user authorized Levels 0 and 1 only; do not begin real email sending (Level 2) or Twilio click-to-call (Level 3) until they confirm. Level 1 now saves structured, unsent email and human call-script drafts in `ai_insights`, accepts sender/language input, checks cited public facts, and uses a rule-based email fallback on unavailable/invalid Gemini output. The Next.js lead detail has draft panels, copy/download/`mailto:`/`tel:` and operator-confirmed manual activity logging. The provider routes remain blocked in its proxy. Keep do-not-contact, mock, archive and evidence guards.

@@ -17,8 +17,11 @@ class Settings:
     google_places_api_key: str = field(default="", repr=False)
     llm_api_key: str = field(default="", repr=False)
     llm_model: str = "gpt-4.1-mini"
+    llm_provider: str = "openai"
     gemini_api_key: str = field(default="", repr=False)
-    gemini_model: str = "gemini-3.5-flash"
+    gemini_model: str = "gemini-3.5-flash-lite"
+    n8n_base_url: str = ""
+    n8n_api_key: str = field(default="", repr=False)
     supabase_url: str = ""
     supabase_key: str = field(default="", repr=False)
     website_allowed_hosts: tuple[str, ...] = ()
@@ -37,6 +40,8 @@ class Settings:
     scrape_output_path: str = str(Path(__file__).resolve().parents[2] / ".local/scrapes")
 
     def validate_runtime(self):
+        if self.llm_provider not in {"openai", "gemini"}:
+            raise ValueError("LLM_PROVIDER must be openai or gemini")
         if self.app_env not in {"development", "production"}:
             raise ValueError("APP_ENV must be development or production")
         if self.browser_runtime not in {"docker", "local"}:
@@ -64,6 +69,7 @@ class Settings:
     def from_env(cls):
         defaults = cls()
         backend = os.getenv("PERSISTENCE_BACKEND", "sqlite")
+        provider = os.getenv("LLM_PROVIDER") or ("gemini" if os.getenv("GEMINI_API_KEY") and not (os.getenv("LLM_API_KEY") or os.getenv("OPENAI_API_KEY")) else "openai")
         if backend not in {"sqlite", "supabase"}:
             raise ValueError("PERSISTENCE_BACKEND must be sqlite or supabase")
         return cls(
@@ -74,10 +80,13 @@ class Settings:
             persistence_backend=backend,
             database_path=os.getenv("APP_DB_PATH", defaults.database_path),
             google_places_api_key=os.getenv("GOOGLE_PLACES_API_KEY", ""),
-            llm_api_key=os.getenv("LLM_API_KEY", ""),
-            llm_model=os.getenv("LLM_MODEL", defaults.llm_model),
+            llm_api_key=(os.getenv("GEMINI_API_KEY", "") or os.getenv("LLM_API_KEY", "")) if provider == "gemini" else (os.getenv("LLM_API_KEY", "") or os.getenv("OPENAI_API_KEY", "")),
+            llm_model=os.getenv("LLM_MODEL", "gemini-3.5-flash-lite" if provider == "gemini" else defaults.llm_model),
+            llm_provider=provider,
             gemini_api_key=os.getenv("GEMINI_API_KEY", ""),
             gemini_model=os.getenv("GEMINI_MODEL", defaults.gemini_model),
+            n8n_base_url=os.getenv("N8N_BASE_URL", "").rstrip("/"),
+            n8n_api_key=os.getenv("N8N_API_KEY", ""),
             supabase_url=os.getenv("SUPABASE_URL", "").rstrip("/"),
             supabase_key=os.getenv("SUPABASE_KEY", ""),
             website_allowed_hosts=tuple(

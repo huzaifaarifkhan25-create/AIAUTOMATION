@@ -105,6 +105,10 @@ def restore(folder, destination):
         if not original.is_absolute():
             raise ValueError("Original artifact root must be absolute")
         with closing(sqlite3.connect(destination / "backend.sqlite3")) as connection, connection:
+            # A restored copy must not revive sessions revoked after the backup.
+            # Users and password hashes are retained; every user signs in again.
+            if connection.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='auth_sessions'").fetchone():
+                connection.execute("DELETE FROM auth_sessions")
             for record_id, payload in connection.execute("SELECT id,payload FROM backend_records WHERE kind='discovery_jobs'").fetchall():
                 job = json.loads(payload)
                 if "result_path" in job:

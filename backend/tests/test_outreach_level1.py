@@ -133,12 +133,16 @@ class LevelOneRoutes(unittest.IsolatedAsyncioTestCase):
 
     async def test_no_key_email_fallback_and_script_unavailable(self):
         self.app.state.ai.settings = replace(self.app.state.ai.settings, gemini_api_key=None)
-        response = await self.client.post(f"/ai/businesses/{self.business_id}/pitch", json=REQUEST)
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()["origin"], "rules")
-        self.assertFalse(response.json()["sent"])
-        script = await self.client.post(f"/ai/businesses/{self.business_id}/call-script", json=REQUEST)
-        self.assertEqual(script.status_code, 503)
+        self.app.state.ai.provider.settings = self.app.state.ai.settings
+        self.app.state.ai.clear_session()
+        with patch.object(self.app.state.ai.provider, "structured", new=AsyncMock()) as provider:
+            response = await self.client.post(f"/ai/businesses/{self.business_id}/pitch", json=REQUEST)
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.json()["origin"], "rules")
+            self.assertFalse(response.json()["sent"])
+            script = await self.client.post(f"/ai/businesses/{self.business_id}/call-script", json=REQUEST)
+            self.assertEqual(script.status_code, 503)
+            provider.assert_not_awaited()
 
     async def test_provider_denial_falls_back_to_unsent_email(self):
         from app.errors import AppError

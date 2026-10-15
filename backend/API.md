@@ -1,5 +1,29 @@
 # Backend API guide
 
+## Current v0.14 additions — 2026-10-15
+
+The current purple UI uses individual operator sessions. Account writes preserve
+Cookie + CSRF identity; bearer access remains an explicit operator API option.
+Local key-entry forms additionally require a real signed-in account on loopback
+in development. Accounts share one workspace. See [ACCOUNTS.md](ACCOUNTS.md).
+
+- `GET /auth/status`, `POST /auth/register`, `POST /auth/login`,
+  `GET /auth/me`, `POST /auth/logout`: account lifecycle.
+- `/agent`: persistent conversations, fixed reads, proposed actions with separate
+  review, local connection and `POST /agent/verify`; see [AGENT.md](AGENT.md).
+- `/n8n`: private connection, fixed template/demo, managed deployment/pause,
+  inquiry execution and saved-run proof; see [N8N.md](N8N.md).
+- `/inquiry-sources`, `/inquiries`, `/outcomes/summary`: reviewed operator source
+  configuration, durable intake results and actual metrics.
+- Public `POST /intake/{source_id}` uses its own `X-Inquiry-Key`, JSON-only 8 KB
+  bound and stable event IDs. It does not use a workspace bearer/account cookie.
+  See [INQUIRIES.md](INQUIRIES.md) for exact schema and one-time-key behavior.
+
+Email-mode sources require reviewed scope and private Resend settings plus
+public signed callbacks. Task-only mode sends nothing. A 202 intake acceptance,
+verified n8n execution, created task and confirmed email delivery are distinct.
+Current tests/limits are in [VERIFICATION.md](VERIFICATION.md).
+
 Development request/response schemas are in `/docs` and `/openapi.json`.
 Production disables these public schema pages; the endpoint contracts remain supported.
 

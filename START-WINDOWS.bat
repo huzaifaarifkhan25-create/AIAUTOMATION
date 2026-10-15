@@ -25,7 +25,11 @@ echo.
 echo Keep this window open while using the app. Press Ctrl+C to stop it.
 echo Your local records will be saved in .local\backend.sqlite3.
 echo.
-".venv\Scripts\python.exe" -m uvicorn app.main:app --app-dir backend --host 127.0.0.1 --port 8000 --workers 1
+if exist ".env" (
+  ".venv\Scripts\python.exe" -m uvicorn app.main:app --app-dir backend --host 127.0.0.1 --port 8000 --workers 1 --env-file .env
+) else (
+  ".venv\Scripts\python.exe" -m uvicorn app.main:app --app-dir backend --host 127.0.0.1 --port 8000 --workers 1
+)
 if errorlevel 1 goto startup_failed
 exit /b 0
 

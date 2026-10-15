@@ -1,5 +1,12 @@
 # Portable deployment
 
+**Current Next.js + accounts + native n8n build:** follow
+[PRODUCTION.md](PRODUCTION.md) and `compose.production.yaml`. It adds the public
+HTTPS ingress, separate frontend, machine intake/callback routing, persistent
+volumes and optional scheduled backup. This older document describes the retained
+backend-only portable image and local verification; its historical shared-access
+limits and check counts are not a statement of the current product's feature set.
+
 The Docker image contains the API, browser workspace, Python 3.12, and the pinned
 Playwright/Chromium runtime. The collector runs directly inside the app container.
 It needs no Docker socket, provider key, or additional scraper container. Development
@@ -167,7 +174,9 @@ outside SCRAPE_OUTPUT_DIR need a separate backup. Supabase requires its provider
 backup/recovery tools; this helper is SQLite only.
 
 Recovery refuses an existing destination and rewrites saved discovery result paths
-to the new recovered scraper root. Start a separate instance with APP_DB_PATH and
+to the new recovered scraper root. It also clears restored account sessions while
+preserving users/password hashes, so an old backup cannot revive a revoked login.
+Start a separate instance with APP_DB_PATH and
 SCRAPE_OUTPUT_DIR set to those recovered paths, then verify records and CSV downloads.
 The backup manifest hashes the original files; restored DB bytes change when job
 paths are relocated. Leave the original instance/data intact until review finishes.

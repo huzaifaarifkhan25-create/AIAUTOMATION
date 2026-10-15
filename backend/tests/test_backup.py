@@ -1,6 +1,7 @@
 import hashlib
 import json
 import shutil
+import sqlite3
 import tempfile
 import unittest
 from pathlib import Path
@@ -83,6 +84,21 @@ class BackupTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(ValueError):
             restore(folder, self.root / "recovered")
         self.assertFalse((self.root / "recovered").exists())
+
+    async def test_restore_preserves_accounts_but_revokes_old_sessions_only_in_restored_copy(self):
+        with sqlite3.connect(self.db) as connection:
+            connection.execute("CREATE TABLE auth_users (id TEXT PRIMARY KEY, email TEXT)")
+            connection.execute("CREATE TABLE auth_sessions (token_hash TEXT PRIMARY KEY, user_id TEXT, expires_at INTEGER)")
+            connection.execute("INSERT INTO auth_users VALUES ('owner', 'fixture@example.test')")
+            connection.execute("INSERT INTO auth_sessions VALUES ('old-token-hash', 'owner', 9999999999)")
+        folder = backup(self.db, self.scrapes, self.root / "backups")
+        recovered = restore(folder, self.root / "recovered")
+        with sqlite3.connect(recovered / "backend.sqlite3") as connection:
+            self.assertEqual(connection.execute("SELECT COUNT(*) FROM auth_sessions").fetchone()[0], 0)
+            self.assertEqual(connection.execute("SELECT email FROM auth_users").fetchone()[0], "fixture@example.test")
+        for path in (self.db, folder / "backend.sqlite3"):
+            with sqlite3.connect(path) as connection:
+                self.assertEqual(connection.execute("SELECT COUNT(*) FROM auth_sessions").fetchone()[0], 1)
 
 
 if __name__ == "__main__":

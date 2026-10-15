@@ -1,0 +1,20 @@
+{
+	email {$ACME_EMAIL}
+	admin off
+}
+
+{$APP_DOMAIN} {
+	encode zstd gzip
+	@machine path /webhooks/* /intake/* /health
+	handle @machine {
+		reverse_proxy app:8000
+	}
+	handle {
+		reverse_proxy frontend:3000
+	}
+}
+
+{$N8N_DOMAIN} {
+	encode zstd gzip
+	reverse_proxy n8n:5678
+}

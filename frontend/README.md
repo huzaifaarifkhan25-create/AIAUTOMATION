@@ -1,27 +1,45 @@
-# New AIAutomation workspace
+# AIAutomation purple workspace
 
-This is an additive Next.js interface. The original FastAPI workspace remains at `/app/`. It uses the same saved businesses, evidence, tasks, discovery jobs and sandbox workflows. Its purple dashboard is styled from the owner's supplied reference, with AIAutomation branding and real backend values.
+The Next.js interface uses the same backend records as the older `/app/` CRM, preserving the owner's purple theme and existing multilingual email/call-script panels. Open **http://127.0.0.1:3000** for this interface; port **8000** is the backend.
 
-**Use port 3000 for this design.** `http://127.0.0.1:8000/app/` is the older fallback CRM; `http://127.0.0.1:3000/workflows` is the new workflow screen. Mock/demo workflows are hidden in the new workspace until **Show demos** is selected. Motion is subtle and respects reduced-motion preferences.
+## Start on Windows
 
-## Run locally
+Use `START-APP-WINDOWS.bat` in the repository root. It opens the backend and frontend in separate terminal windows. See [local setup](../deploy/LOCAL-RUN.md) for prerequisites and troubleshooting. Keep `.local` when updating the code, because it contains your local database.
 
-1. Start the existing FastAPI app on `http://127.0.0.1:8000` with `APP_API_TOKEN` set to a private shared value. Keep one worker.
-2. In a separate shell, set `BACKEND_URL=http://127.0.0.1:8000`, the same `APP_API_TOKEN`, a private `DEMO_ACCESS_CODE` of at least 12 characters and a private `FRONTEND_SESSION_SECRET` of at least 32 characters. Set them in the shell or host settings; this app does not load `.env.example`.
-3. Run `cd frontend`, `npm install`, then `npm run dev`. Open `http://localhost:3000`.
+For manual startup:
 
-Do not use `NEXT_PUBLIC_` for any secret. The browser receives only an HttpOnly signed demo session; the server-side route handler adds the backend bearer token. The proxy exposes only the read and draft operations used by this interface. The access gate is shared pilot access, not individual accounts or a complete public security model.
+1. Start FastAPI on port 8000 with a persistent SQLite database and exactly one worker.
+2. In a separate terminal, set server-only `BACKEND_URL=http://127.0.0.1:8000`.
+3. Run `cd frontend`, `npm ci`, and `npm run dev`. Open port 3000.
+4. Register the first operator account. If the backend has `APP_API_TOKEN` configured, registration requires that workspace invitation code.
 
-A full browser reload, typed workspace URL, or new tab clears the preview session and returns to `/login`. Navigation inside the workspace keeps the session. Use the lock button to leave without reloading.
+Individual account sessions survive reload and use backend authentication and CSRF checks. Logout revokes the session. All operators share one workspace; separate company databases, roles and password recovery are not implemented. Optional legacy access-code mode remains available only when its four server variables are configured; it still locks on a full-page reload.
 
-## Hosted workflow
+Do not prefix credentials with `NEXT_PUBLIC_`. The proxy forwards authenticated backend session cookies through server code. Credentials never belong in chat messages.
 
-Vercel can host this frontend with `frontend` as its Root Directory and the four server-side environment variables above. The FastAPI backend needs a separate Python host, persistent SQLite disk, one worker/replica, `APP_ENV=production`, a strong `APP_API_TOKEN`, and explicit `APP_ALLOWED_HOSTS`. Use a backend HTTPS URL for `BACKEND_URL` in production. See [portable deployment](../deploy/README.md) for existing backend requirements. A basic Python host without the bundled browser supports CSV preview/import, not live Maps collection. Run Edge locally, download its CSV, review categories, then import into the hosted backend.
+## Functional pages
 
-Gemini drafts require `GEMINI_API_KEY` on the **backend** only. `GEMINI_MODEL` defaults to `gemini-3.5-flash`. The Google Stitch key configures Codex design tooling separately and has no role in browser runtime. No live Gemini or Stitch operation has been verified here. Calls and email stay disabled by default.
+- **Discover:** live collector status/jobs and CSV preview/import with explicit column mapping, source labels and duplicate validation.
+- **Leads:** evidence, direct business confirmation, rules analysis, current workflow drafts, contact/task history, and the existing sender/language panels for unsent pitches and human call scripts.
+- **Tasks:** create manual tasks and mark saved pending tasks complete or cancelled.
+- **AI Agent:** persistent conversations, scoped saved-record tools, exact proposals requiring review, and a live read-only tool round-trip verification. Missing provider credentials produce a setup state, not fake replies.
+- **Automations:** configure/check n8n, create explicitly fictional demos, deploy the supported inquiry template, run a permitted manual inquiry, inspect actual execution/task evidence, and pause managed deployments. Manual acknowledgement drafts stay unsent.
+- **Inquiries:** authorize fixed source settings, receive a one-time intake key for your form server, pause sources, rotate keys, and inspect inquiry/task/email state. Email mode authorizes future fixed acknowledgements through the enabled backend delivery adapter. Never embed the intake key in a public browser form.
+- **Outcomes:** actual connected-source event counts, task completion/overdue state, processing timestamps and distinct provider submission versus confirmed email delivery. Fictional records are excluded by default.
+- **Workflow drafts / Automation lab:** retained generated graph review and local sandbox reminder execution. These screens do not claim to deploy arbitrary n8n graphs.
 
-On Windows, stop the existing port-8000 backend and run `pwsh -File START-GEMINI-BACKEND.ps1` from the repository root. It prompts for a Gemini key without echoing or saving it, then starts the local backend. Restart this script whenever the backend is stopped; refresh the workspace to update AI availability. The key shown earlier for Stitch was not installed as a Gemini credential.
+## Credentials and delivery
 
-## Limits
+Use [provider setup](../backend/AGENT.md), [n8n setup](../backend/N8N.md), and [inquiry intake](../backend/INQUIRIES.md). Gemini generation defaults to `gemini-3.5-flash-lite`. Connect Gemini in the local AI Agent form or configure it privately on the backend; a local session connection also enables the backend's Gemini draft service. Live verification checks a specific read-only tool exchange, not every future answer.
 
-AI insights have their own labelled estimate and never change evidence scoring. Workflow graphs are generated JSON, not external automation execution. Automation lab uses synthetic sandbox events and unsent previews. Review business category, provenance and contact permission before any real outreach. Public hosting, individual accounts, provider verification and hosted browser isolation remain separate work.
+Real email requires opt-in backend settings, Resend credentials, a verified sender, signed provider callbacks, a public backend URL, and a real non-demo source with recipient permission. A provider submission is not delivery. Fictional demo sources cannot send email. Do not test against real people without their permission.
+
+The managed n8n template is bounded to inquiry follow-up. The backend rejects unsupported/changed graphs, verifies engine output and saved execution data, and creates a deduplicated task. Public inquiry intake uses its own source token rather than the operator login session. Integration belongs in your website/form's server handler; this build does not automatically modify a customer's website.
+
+## Hosted deployment
+
+[The deployment guide](../deploy/README.md) includes a frontend container, persistent backend storage and recovery commands. Set `BACKEND_URL` to the internal backend origin for server-to-server calls. Register an operator and configure the public backend origin/allowed hosts/private provider settings. Use HTTPS at the public edge and keep one backend worker/replica. A host without browser runtime still supports CSV import.
+
+## Checks
+
+`npm run typecheck` and `npm run build` check the interface. `node --test tests/*.test.mjs` checks outreach-link encoding and CSV header mapping. `tests/workspace-browser.cjs` exercises an isolated backend/frontend fixture; it requires Playwright and a browser. This is separate from real provider verification. Test records must not be added to your live `.local` database.

@@ -1,114 +1,108 @@
-# Open AIAUTOMATION on your Windows laptop
+# Open AIAutomation on Windows — v0.14
 
-These steps run the actual CRM and backend on your laptop. You need Windows,
-Python 3.12 and an internet connection for the first dependency installation.
-Opening the CRM requires no Node.js, Docker or paid provider account.
-For optional live Maps collection on Windows, run
-**SETUP-WINDOWS-COLLECTOR.bat** once after installing Node.js. It uses the
-installed Microsoft Edge browser and does not need Docker. Restart the app
-after setup. The first collector run still needs Google Maps network access;
-always preview category and source evidence before importing.
+## First installation
 
-1. Download the project ZIP from this GitHub branch: use **Code → Download ZIP**.
-2. Right-click the downloaded ZIP, select **Extract All**, and open the extracted
-   project folder. Do not run the app from inside the ZIP.
-3. Install [Python 3.12 for Windows](https://www.python.org/downloads/release/python-31210/).
-   Choose **Windows installer (64-bit)** for a usual Intel/AMD laptop. Include the
-   Python launcher (`py`) and pip; the standard installer includes them.
-4. Double-click **START-WINDOWS.bat**. The first launch installs dependencies;
-   subsequent launches check the same pinned dependencies. Keep this window open.
-5. Wait for **Application startup complete**. On this same laptop, type
-   `http://127.0.0.1:8000/app/` in your browser's address bar.
+1. Download the complete source ZIP and choose **Extract All**. Do not run from
+   inside the ZIP. Keep the project in a folder you can write to.
+2. Install **Python 3.12 (64-bit)** from https://www.python.org/downloads/ and
+   include the `py` launcher and pip. Install **Node.js 24 LTS** from
+   https://nodejs.org. Reopen terminal windows after installation.
+3. Double-click **START-APP-WINDOWS.bat**. It starts the backend and current
+   purple frontend in two windows and installs their pinned dependencies.
+4. Wait for backend **Application startup complete** and frontend **Ready**.
+   Keep both windows open, then type **http://127.0.0.1:3000** in your browser.
+5. Choose **Register**, use a password of at least 12 characters and confirm
+   that accounts share one workspace. If a private `APP_API_TOKEN` is configured,
+   enter it as the workspace invitation code. Registration needs no AI key.
 
-This address works on your laptop after you start its local app. It is not a
-public link to the cloud workspace. Stop the app with **Ctrl+C** in its window.
-Run **START-WINDOWS.bat** again to reopen it; your local records are retained.
+Your account remains signed in after reload, until logout, expiration or
+revocation. Operators share leads, conversations, tasks and automations; there
+are no private company workspaces or roles. Password reset is not implemented.
 
-## First test: see the CRM and an explicitly fictional example
+`127.0.0.1` and `localhost` mean this laptop. These addresses work only after
+starting its servers. Backend port is **8000**; current UI port is **3000**;
+optional local n8n port is **5678**. The older **START-WINDOWS.bat** starts only
+the backend and its `/app/` shared-token fallback, not the purple account UI.
 
-The download has no database, credentials or copied cloud leads. Your first
-launch therefore shows an empty CRM. An empty workspace is expected.
+## Keep your records when upgrading
 
-1. Open **Automation lab** in the navigation.
-2. Click **Create fictional reminder demo**. This enables the demo filter and
-   creates a clearly labeled fictional business and reminder workflow.
-3. Open **Overview**, then **Leads & research**. Find the demo business, search
-   its name, open its details and try the lead views and sorting.
-4. Open **Follow-up tasks**. Choose that demo business, enter a task and save it.
-   Find the saved task and mark it complete.
-5. Return to **Automation lab**. Enter a future appointment and an earlier
-   reminder time that is still in the future. Check the required confirmations,
-   schedule the reminder and refresh its history after the reminder is due.
-   Expect a succeeded sandbox run and an **unsent preview**; no message is sent.
-6. Stop and restart the app. Confirm your demo lead and task remain saved. Enable
-   **Include fictional demo records/leads** again when needed; demos are hidden
-   by default after a reload.
+Stop both old servers with Ctrl+C. Extract the new ZIP into a separate folder.
+Copy the **entire `.local` folder** from the old installation to the new one,
+and separately copy your private root `.env` and any `frontend/.env.local`.
+Keep the original folder as a recovery copy. Never copy an empty download over
+`.local`. The ZIP contains source only, so a genuinely new installation is empty.
 
-The other controls for clients, tasks and monitoring are described in
-[the workspace walkthrough](backend/WORKSPACE.md). Real data can be imported
-through **Discover & import** with CSV preview before saving.
+Use the new folder's START-APP-WINDOWS.bat. It creates its own Python environment
+and installs the locked frontend dependencies. Browser refresh **Ctrl+F5** loads
+current code. An old static-folder-only logo update is insufficient for this
+release: it adds backend, frontend, accounts and execution files.
 
-## Update an existing laptop installation
+## First safe demonstration
 
-For the logo update, keep your existing project folder and its saved data:
+1. In **Discover**, preview your CSV, map business name and address, review the
+   category/source and import. Failed live collection never supplies mock leads.
+2. In **Tasks**, create a follow-up task, then complete or cancel it. These are
+   manual work records, not proof of customer contact.
+3. Open **AI Agent**. Without Gemini it should explain that setup is needed.
+   Connect a fresh key privately and click **Verify AI Agent** before using it.
+4. For native execution, install/start optional n8n as below, connect it under
+   **Automations**, and create the explicitly fictional inquiry demo. Review
+   and deploy it. Process a future-dated permitted inquiry; inspect the actual
+   n8n execution reference and task. The acknowledgement is unsent.
+5. Under **Inquiries**, enable the demo filter and create a task-only source for
+   that demo deployment. Your form server can submit to its authenticated
+   endpoint. **Outcomes** shows recorded events; demos are excluded by default.
+6. Pause the source and native deployment when finished. Check that existing
+   tasks persist after restarting the app. No demonstration step sends email.
 
-1. Stop the app with **Ctrl+C** in its launcher window.
-2. Download and extract the latest ZIP from the same GitHub branch into a
-   separate folder.
-3. In that new folder, open `backend/app` and copy its **static** folder.
-4. Open `backend/app` in your existing project folder and paste it there. Choose
-   **Replace the files in the destination** if Windows asks.
-5. Double-click **START-WINDOWS.bat** in your existing project folder again.
-6. In the browser, press **Ctrl+F5** to load the new logo and styles.
+For an actual business, record only true business-confirmed inquiry evidence.
+Do not fabricate confirmation to unlock deployment. The existing sandbox reminder
+lab and old client/operations screens remain available alongside native n8n.
 
-Your imported leads are saved separately in `.local/backend.sqlite3`. Keep that
-folder. The logo update only needs the `backend/app/static` files.
+## Private keys
 
-## Update backend code while keeping your records
+Follow [CREDENTIALS-SETUP.md](docs/CREDENTIALS-SETUP.md) for Gemini, n8n and
+Resend. Never paste API keys into chat. To retain settings after restart, copy
+root `.env.example` to root **`.env`** (not `.env.txt`), edit it privately and
+restart the backend. START-WINDOWS.bat loads this file explicitly. Provider keys
+belong in that backend file, never `frontend/.env.local` or `NEXT_PUBLIC_*`.
+The supplied defaults are local development settings, not production settings.
 
-The static-only steps above apply to the logo change. For backend or security
-updates, stop the running app first, extract the new project ZIP into a separate
-folder, and copy the entire `.local` folder from your old project into the new
-project. Keep the old folder as a recovery copy. Start the new project's
-`START-WINDOWS.bat`; it will create its own `.venv` and use your copied SQLite
-database and scraper artifacts. Do not replace `.local` with an empty folder from
-a download. Re-enter any private environment settings separately; they are not
-included in source ZIPs.
+For a session-only key, sign in and use **AI Agent → Connect AI** or the local
+n8n connection form. These loopback forms keep keys in server memory and require
+reconnection after restart. The n8n account itself persists separately.
+
+## Optional local n8n and real Maps collector
+
+Native n8n needs **Docker Desktop**, running Linux containers. After installation,
+run **START-N8N-WINDOWS.bat**, open **http://127.0.0.1:5678**, create its owner,
+and use **Settings → n8n API → Create API key**. Enter that key privately in
+AIAutomation's local n8n connection form with base URL `http://127.0.0.1:5678`.
+No n8n Cloud subscription is required. Keep its data volume when updating.
+
+Maps collection is separate and does not need n8n. After installing Node.js and
+Microsoft Edge, run **SETUP-WINDOWS-COLLECTOR.bat** and restart the backend. The
+example config uses `BROWSER_RUNTIME=local`. Start a 1–10-listing pilot, inspect
+its saved CSV/source preview and explicitly import relevant results. Browser
+readiness is not proof that a Google Maps search succeeded. CSV import works
+without Edge or Docker. No new live Maps collection was run for this release.
 
 ## Troubleshooting
 
-- **Python is missing:** finish the Python 3.12 installation with the launcher
-  enabled, then run the batch file again.
-- **Setup fails:** read the error in the window. Dependency installation needs
-  internet access. Send the error text for help, keeping any credentials private.
-- **Browser cannot connect:** wait for startup to complete and keep the app window
-  open. If another copy is using port 8000, close it before starting this one.
-- **Demo disappeared:** enable the fictional-data filter; your saved records are
-  still in `.local/backend.sqlite3`.
-- **Real collection is unavailable:** Run the optional
-  **SETUP-WINDOWS-COLLECTOR.bat** with Node.js and Edge installed, restart the
-  app, and click **Check again** in Discover & import. Windows now defaults to
-  this local Edge runtime; `BROWSER_RUNTIME=docker` remains an explicit option.
-  **Browser setup ready** means Edge and collector files were found. It does
-  not mean a Maps search succeeded. Enter a city; the app will search for
-  medical spas there. You may also enter a full business-and-location query.
-  Start a pilot and inspect its preview before importing. A failed job saves no lead;
-  old generic errors cannot show their exact cause.
-  **Open Google Maps** also works for manual review without the collector. CSV
-  imports and the CRM need neither Node nor Docker. A one-listing Edge collector
-  run succeeded on the checked Windows laptop without importing it; each new
-  location still needs a live check and human review.
+- **Python/Node missing:** finish the installations and reopen the launcher.
+- **Cannot connect:** wait for both servers. Read the terminal error; another
+  process may already use port 8000 or 3000. Stop only your old app instance.
+- **Invalid APP_ENV or storage settings:** compare your private `.env` to the
+  new `.env.example`; do not leave enum/path/model settings blank. Preserve keys.
+- **Gemini quota/model/key error:** choose a model available to your AI Studio
+  project and repeat the real verification. A successful sign-in does not enable AI.
+- **Collector not configured:** use CSV or install the optional local collector;
+  this message does not mean your imported data is fake.
+- **Demo records hidden:** enable the fictional/demo filter for that screen.
+- **Lost source key:** rotate it under Inquiries and update the sending server.
+- **Uncertain execution/email:** inspect its recorded engine/provider result;
+  do not repeatedly submit new events to force it through.
 
-The [live integration check](backend/LIVE_INTEGRATION_CHECKS.md) lists the exact
-AI, email and calling prerequisites. Configure credentials only in private
-runtime settings, then use consenting test destinations and an isolated database
-for real provider checks. Never paste secrets into a chat or source file.
-
-Calls and email are disabled by default. This local walkthrough exercises the
-sandbox; live providers, public hosting, native n8n and individual user accounts
-remain separate features or setup steps. See [HANDOFF.md](backend/HANDOFF.md).
-
-The cross-platform backend and CRM were previously verified in the cloud. Windows
-dependency downloads for Python 3.12 (64-bit Windows) were checked successfully;
-the batch launcher has not been
-executed on a physical Windows laptop here.
+The launchers are source-reviewed. Linux HTTP, browser and backup checks do not
+establish that these batch files were executed on a physical Windows laptop.
+Live Gemini, email and public hosting need separate checks on your installation.

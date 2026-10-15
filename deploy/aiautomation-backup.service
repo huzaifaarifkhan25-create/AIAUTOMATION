@@ -1,0 +1,12 @@
+[Unit]
+Description=AIAutomation verified SQLite and scraper backup
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+# Change both paths to your actual checkout before installation.
+WorkingDirectory=/opt/AIAUTOMATION
+ExecStart=/opt/AIAUTOMATION/deploy/backup-server.sh
+UMask=0077
+Nice=10

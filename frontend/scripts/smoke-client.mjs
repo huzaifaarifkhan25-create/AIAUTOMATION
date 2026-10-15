@@ -2,7 +2,7 @@ const origin = 'http://127.0.0.1:3011';
 const login = await fetch(origin + '/api/access', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code: 'synthetic-demo-access' }) });
 if (!login.ok) throw Error('Access gate failed');
 const cookie = (login.headers.get('set-cookie') || '').split(';')[0];
-if (!cookie.startsWith('aia_session=')) throw Error('Access session cookie missing');
+if (!cookie.startsWith('preview_session=')) throw Error('Access session cookie missing');
 async function request(path, init = {}) {
   const response = await fetch(origin + '/api/backend/' + path, { ...init, headers: { Cookie: cookie, ...(init.headers || {}) } });
   const body = await response.json();
@@ -33,6 +33,6 @@ if (insights.status !== 200 || !insights.body.some(row => row.kind === 'pitch' &
 const forbidden = await request('businesses/fixture/calls', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
 if (forbidden.status !== 405) throw Error('Proxy exposed call route');
 const reload = await fetch(origin + '/workflows', { headers: { Cookie: cookie, Accept: 'text/html' }, redirect: 'manual' });
-if (reload.status !== 307 || !reload.headers.get('location')?.endsWith('/login') || !reload.headers.get('set-cookie')?.startsWith('aia_session=;'))
+if (reload.status !== 307 || !reload.headers.get('location')?.endsWith('/login') || !reload.headers.get('set-cookie')?.startsWith('preview_session=;'))
   throw Error('Full page reload did not clear the preview session');
 console.log('PASS: access gate, reload lock, authenticated proxy, CSV import, unsent email fallback, manual activity, saved draft readback, call route blocked (isolated fixture).');

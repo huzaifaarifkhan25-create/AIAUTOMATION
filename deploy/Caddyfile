@@ -1,0 +1,16 @@
+{
+	email {$ACME_EMAIL}
+	admin off
+}
+
+{$APP_DOMAIN} {
+	encode zstd gzip
+	# These machine endpoints receive the original signed body and headers.
+	@machine path /webhooks/* /intake/* /health
+	handle @machine {
+		reverse_proxy app:8000
+	}
+	handle {
+		reverse_proxy frontend:3000
+	}
+}

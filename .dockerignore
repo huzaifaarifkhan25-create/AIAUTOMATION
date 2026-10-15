@@ -9,7 +9,10 @@
 !backend/serve.py
 !backend/healthcheck.py
 !backend/backup.py
+!backend/client_demo.py
 !deploy/
 !deploy/build_dependencies.py
 **/__pycache__/**
 **/*.py[cod]
+**/.env
+**/.env.*
