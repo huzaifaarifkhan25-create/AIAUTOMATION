@@ -1,5 +1,18 @@
 # Current verification — v0.14.0
 
+## One-time private Gemini setup — 2026-10-15
+
+`SETUP-GEMINI-WINDOWS.bat` now runs a masked local helper that atomically updates
+only the four Gemini settings in ignored root `.env`. The existing backend
+launcher loads that file on each start. No actual key is embedded in the helper,
+repository or download. Existing non-AI settings and comments are preserved.
+Seven isolated helper tests passed: two fresh process loads, duplicate/exported
+keys, UTF-8 BOM/CRLF and multiline preservation, invalid input/config rejection,
+atomic write failure cleanup, refusal of an echoing prompt and symlink protection.
+No actual credential or provider request was used. The batch file was reviewed,
+not physically executed on Windows. The 309-test integrated result below predates
+these seven additional tests; no application service logic changed.
+
 ## Integrated seven-area build — 2026-10-15
 
 This section supersedes older scope/counts below. Source integrates the current

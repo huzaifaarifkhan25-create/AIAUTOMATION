@@ -25,6 +25,8 @@ No paid account or provider key is needed for accounts, CSV import, evidence,
 tasks or sandbox demonstrations. Live AI needs Gemini. Native execution needs
 n8n; automatic email additionally needs a verified Resend sender and callbacks.
 See [credential setup](docs/CREDENTIALS-SETUP.md) for the exact steps.
+On Windows, **SETUP-GEMINI-WINDOWS.bat** saves Gemini once in your private local
+`.env`; future backend starts reuse it. No key is embedded in the download.
 
 ## Start on Linux
 

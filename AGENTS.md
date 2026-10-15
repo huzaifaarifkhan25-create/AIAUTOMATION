@@ -1,5 +1,14 @@
 # Med Spa Automation Platform
 
+## Persistent local Gemini setup — 2026-10-15
+
+SETUP-GEMINI-WINDOWS.bat runs backend/configure_gemini.py with a hidden local prompt
+and atomically saves all four Gemini settings to ignored root .env. Windows
+backend startup already loads this file. No key belongs in GitHub/downloads.
+Preserve existing non-AI config and .local records. Seven isolated helper tests
+passed, including two fresh process loads and failure preservation. No actual
+key/provider or physical Windows execution was used for this change.
+
 ## Integrated v0.14 verification — 2026-10-15
 
 Current source is on `codex/complete-automation`, based on GitHub preview b43b2f2.

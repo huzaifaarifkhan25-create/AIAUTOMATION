@@ -23,7 +23,13 @@ Previously exposed keys should be revoked and replaced.
 
 This connection also enables the separate AI insight/outreach draft APIs. A
 session-only key stays in backend memory until restart/disconnection. For a
-persistent local setup, fill these entries in root private `.env` and restart:
+persistent Windows setup, run **SETUP-GEMINI-WINDOWS.bat** once and paste the new
+key at its hidden prompt. It saves all four settings below in root private `.env`
+without changing unrelated settings. Restart the backend once; later starts load
+it automatically. The helper itself contains no credential, and `.env` is excluded
+from GitHub/ZIP releases. This file contains plaintext settings; keep it private
+and preserve it separately when updating. Existing process environment overrides
+take precedence. You can also edit these entries privately instead:
 
 ```dotenv
 LLM_PROVIDER=gemini

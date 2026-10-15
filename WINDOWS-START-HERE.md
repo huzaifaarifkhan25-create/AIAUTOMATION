@@ -61,6 +61,15 @@ lab and old client/operations screens remain available alongside native n8n.
 
 ## Private keys
 
+To save Gemini once, double-click **SETUP-GEMINI-WINDOWS.bat**, paste a fresh API
+key into its hidden prompt and press Enter. The helper saves it in this project's
+ignored root `.env`, preserves non-AI settings and sets Gemini provider/model
+values. Stop the existing backend with Ctrl+C and restart it once. Subsequent
+starts load the key automatically; you do not need to reconnect on every restart.
+The key is not included in GitHub or the ZIP. This is a local plaintext settings
+file, so keep it private and copy it separately when upgrading. Saving does not
+verify the key; use **AI Agent → Verify live AI** after startup.
+
 Follow [CREDENTIALS-SETUP.md](docs/CREDENTIALS-SETUP.md) for Gemini, n8n and
 Resend. Never paste API keys into chat. To retain settings after restart, copy
 root `.env.example` to root **`.env`** (not `.env.txt`), edit it privately and
@@ -71,6 +80,10 @@ The supplied defaults are local development settings, not production settings.
 For a session-only key, sign in and use **AI Agent → Connect AI** or the local
 n8n connection form. These loopback forms keep keys in server memory and require
 reconnection after restart. The n8n account itself persists separately.
+
+If an old key/model remains active, close the backend and remove stale
+`GEMINI_API_KEY` / `LLM_*` overrides from the environment used to launch it.
+Existing process environment variables take precedence over the `.env` file.
 
 ## Optional local n8n and real Maps collector
 
